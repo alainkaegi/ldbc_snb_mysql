@@ -1,0 +1,42 @@
+/**
+ * Copyright © 2017 Alain Kägi
+ */
+
+apply plugin: 'java'
+
+def ldbcDriverVersion = '0.2-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'mysql:mysql-connector-java:5.1.16'
+    compile "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
+}
+
+task loader(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.loader.BulkLoader'
+}
+
+task query2(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query2'
+}
+
+task query4(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query4'
+}
+
+task query8(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query8'
+}
+
+task query9(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query9'
+}

@@ -1,0 +1,20 @@
+# Name of the database; no need to change this field
+database:ldbc
+
+# User of the database;  no need to change this field
+user:ldbc
+
+# Password for the user of the database; please fill in
+password:
+
+# Location of the substitution parameter files containing files such as query_1_param.txt and others; please update as necessary
+parameterFilesDirectory:/home/user/ldbc_snb_datagen/substitution_parameters
+
+# Location of the dataset in the CVS format, one entitity/relation per file (i.e., merged)
+datasetDirectory:/home/user/ldbc_snb_datagen/social_network_merged
+
+# Uncomment next line for verbose output (i.e., results of the queries)
+#beVerbose:true
+
+# Uncomment next line for timing  output
+#measureLatency:true
