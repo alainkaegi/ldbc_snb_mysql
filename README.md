@@ -56,12 +56,22 @@ straightforward to choose a different naming discipline.
 
 Set up MySQL
 ------------
-- sudo usermod -a -G mysql $(USER)  (must log out and back in to take effect)
+- sudo usermod -a -G mysql $USER
+  (must log out and back in to take effect)
 - sudo chmod g+rwx /var/lib/mysql-files/
+  (I had to repeat this step on occasion; perhaps after a software update?)
 - add these lines to /etc/mysql/my.cnf:
+```
 [mysqld]
 character-set-server = utf8
 character-set-filesystem = utf8
+```
+- restart the mysql server
+- CREATE USER 'ldbc'@'localhost' IDENTIFIED BY '<password>';
+  (note the password for later use in these instructions)
+- CREATE DATABASE ldbc;
+- GRANT ALL PRIVILEGES ON ldbc.* TO 'ldbc'@'localhost';
+- GRANT FILE ON *.* TO 'ldbc'@'localhost';
 
 Generate the Dataset
 --------------------
