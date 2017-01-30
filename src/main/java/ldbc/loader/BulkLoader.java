@@ -295,7 +295,7 @@ public class BulkLoader {
         new TableInformation(
             "Organisation",
             "id BIGINT NOT NULL, " +
-                "name VARCHAR(40), " +
+                "name VARCHAR(150), " +
                 "PRIMARY KEY (id)",
             "organisation.csv",
             "CXCX"

@@ -125,8 +125,8 @@ The LDBC data generator produces strings longer than promised by the
 benchmark specification [1].  In particular I have found that some
 forum titles exceed size 40, some message content exceed 2000, some
 place names exceed size 40, some tag names exceed size 40, some email
-addresses exceed size 40.  I have used sizes 100, 2100, 100, 100, and
-80 respectively.
+addresses exceed size 40, and organization's names exceed 40.  I have
+used sizes 100, 2100, 100, 100, 80, and 150 respectively.
 
 References
 ==========
