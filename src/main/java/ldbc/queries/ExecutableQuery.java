@@ -13,5 +13,6 @@ import java.sql.SQLException;
 interface ExecutableQuery {
 
     void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException;
+    void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException;
 
 }

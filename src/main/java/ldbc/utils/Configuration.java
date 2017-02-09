@@ -20,8 +20,8 @@ import java.util.Properties;
  * "database" URL, a database "user" and her "password", a
  * "parameterFilesDirectory" holding query input parameter files, and
  * a "datasetDirectory" containing the merged generated dataset in
- * the CVS format.  Optional parameters are "measureLatency" and
- * "beVerbose".
+ * the CVS format.  Optional parameters are "measureLatency",
+ * "beVerbose", and "explain".
  */
 public class Configuration {
 
@@ -29,6 +29,7 @@ public class Configuration {
 
     private boolean measureLatency;
     private boolean beVerbose;
+    private boolean explain;
     private String database;
     private String user;
     private String password;
@@ -41,6 +42,7 @@ public class Configuration {
             config.load(new FileInputStream(configFilename));
             measureLatency = config.getProperty("measureLatency", "false").equals("true");
             beVerbose = config.getProperty("beVerbose", "false").equals("true");
+            explain = config.getProperty("explain", "false").equals("true");
             if ((database = config.getProperty("database")) == null) throw new MissingConfigurationException(configFilename + ": database: No such field defined");
             if ((user = config.getProperty("user")) == null) throw new MissingConfigurationException(configFilename + ": user: No such field defined");
             if ((password = config.getProperty("password")) == null) throw new MissingConfigurationException(configFilename + ": password: No such field defined");
@@ -57,6 +59,7 @@ public class Configuration {
 
     public boolean beVerbose() { return beVerbose; }
     public boolean measureLatency() { return measureLatency; }
+    public boolean explain() { return explain; }
     public String database() { return database; }
     public String user() { return user; }
     public String password() { return password; }

@@ -21,6 +21,8 @@ import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
 
+import ldbc.utils.Explanation;
+
 /** Eigth complex read query. */
 public class Query8 implements ExecutableQuery {
 
@@ -29,6 +31,20 @@ public class Query8 implements ExecutableQuery {
     private static final String queryParameterFilename = "query_8_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)";
     private static final int queryLimit = 20;
+    /** Recent replies. */
+    private static final String queryString =
+        "  SELECT Person.id, Person.firstName, Person.lastName, " +
+        "         Message.creationDate, Message.id, Message.content " +
+        "    FROM Person, Message, CommentReplyOfMessage, " +
+        "         MessageHasCreatorPerson as MessageHasCreatorPerson, " +
+        "         MessageHasCreatorPerson as CommentHasCreatorPerson " +
+        "   WHERE ? = MessageHasCreatorPerson.personId " +
+        "     AND MessageHasCreatorPerson.messageId = CommentReplyOfMessage.messageId " +
+        "     AND CommentReplyOfMessage.commentId = CommentHasCreatorPerson.messageId " +
+        "     AND CommentHasCreatorPerson.personId = Person.id " +
+        "     AND CommentReplyOfMessage.commentId = Message.id " +
+        "ORDER BY Message.creationDate DESC, Message.id " +
+        "   LIMIT ?";
 
     /** A minimal constructor. */
     private Query8() {}
@@ -39,7 +55,7 @@ public class Query8 implements ExecutableQuery {
     }
 
     /**
-     * Recent replies.
+     * Execute the query for the given inputs.
      * @param db        A database handle
      * @param personId  A person ID
      * @param limit     An upper bound on the size of results returned
@@ -52,19 +68,7 @@ public class Query8 implements ExecutableQuery {
 
         List<LdbcQuery8Result> result = new ArrayList<>();
 
-        PreparedStatement statement = db.prepareStatement(
-            "  SELECT Person.id, Person.firstName, Person.lastName, " +
-            "         Message.creationDate, Message.id, Message.content " +
-            "    FROM Person, Message, CommentReplyOfMessage, " +
-            "         MessageHasCreatorPerson as MessageHasCreatorPerson, " +
-            "         MessageHasCreatorPerson as CommentHasCreatorPerson " +
-            "   WHERE ? = MessageHasCreatorPerson.personId " +
-            "     AND MessageHasCreatorPerson.messageId = CommentReplyOfMessage.messageId " +
-            "     AND CommentReplyOfMessage.commentId = CommentHasCreatorPerson.messageId " +
-            "     AND CommentHasCreatorPerson.personId = Person.id " +
-            "     AND CommentReplyOfMessage.commentId = Message.id " +
-            "ORDER BY Message.creationDate DESC, Message.id " +
-            "   LIMIT ?");
+        PreparedStatement statement = db.prepareStatement(queryString);
         statement.setLong(1, personId);
         statement.setInt(2, limit);
         ResultSet resultSet = statement.executeQuery();
@@ -84,6 +88,24 @@ public class Query8 implements ExecutableQuery {
     }
 
     /**
+     * Explain the query for the given inputs.
+     * @param db        A database handle
+     * @param personId  A person ID
+     * @param limit     An upper bound on the size of results returned
+     * @return information about the query execution plan
+     * @throw SQLException if a problem occurs during the query's execution
+     */
+    public static ResultSet explain(Connection db,
+        long personId,
+        int limit) throws SQLException {
+
+        PreparedStatement statement = db.prepareStatement(Explanation.query + queryString);
+        statement.setLong(1, personId);
+        statement.setInt(2, limit);
+        return statement.executeQuery();
+    }
+
+    /**
      * Execute the query once for every query parameters.
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
@@ -98,6 +120,22 @@ public class Query8 implements ExecutableQuery {
 
             if (beVerbose)
                 print(personId, r);
+        }
+    }
+
+    /**
+     * Explain the query with the first set of query parameters.
+     * @param db               A database handle
+     * @param queryParameters  Stream of query input parameters
+     * @throw SQLException if a problem occurs during the query's execution
+     */
+    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+        if (queryParameters.nextLine()) {
+            long personId = queryParameters.getLong();
+
+            ResultSet resultSet = explain(db, personId, queryLimit);
+
+            ldbc.utils.Explanation.print(System.out, resultSet);
         }
     }
 

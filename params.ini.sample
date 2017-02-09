@@ -18,3 +18,12 @@ datasetDirectory:/home/user/ldbc_snb_datagen/social_network_merged
 
 # Uncomment next line for timing  output
 #measureLatency:true
+
+# Uncomment the line at the end of this comment block to get an
+# explanation of the query's execution plan
+# This parameter will use the first line of the given substitution
+# parameter file to produce the explanation and then quit; the
+# explanation will be output in tab-separated lines fit to import in a
+# spreadsheet; for a description of the output see MySQL's user's
+# guide; the value of beVerbose parameter is ignored
+#explain:true

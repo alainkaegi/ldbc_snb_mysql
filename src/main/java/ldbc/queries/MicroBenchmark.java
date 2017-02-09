@@ -37,7 +37,10 @@ public class MicroBenchmark {
             try {
 
                 Connection db = Db.connect(url, config.user(), config.password());
-                doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.beVerbose());
+                if (config.explain())
+                    doExplainQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern);
+                else
+                    doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.beVerbose());
 
             }
             catch (QueryParameterFile.QueryParameterFileNotFoundException e) {
@@ -89,6 +92,21 @@ public class MicroBenchmark {
 
         if (measureLatency)
             timer.print();
+    }
+
+    /**
+     * Explain a query using the first parameter line read from a file.
+     * @param query  Essentially a handle to a per-query defined executeQueries function
+     * @param db  A database handle
+     * @param queryParameterFilename  The source of the input query parameters
+     * @param queryParameterFileLinePattern  A regular expression describing one line of parameter input
+     * @throw QueryParameterFileNotFoundException if the parameter file is not found
+     * @throw SQLException if a problem occurs during the query's execution
+     */
+    private static void doExplainQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterFilename, String queryParameterFileLinePattern) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
+        QueryParameterFile queryParameters = new QueryParameterFile(queryParameterFilename, queryParameterFileLinePattern);
+
+        query.explainQuery(db, queryParameters);
     }
 
 }

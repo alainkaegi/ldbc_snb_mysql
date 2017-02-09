@@ -20,6 +20,8 @@ import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
 
+import ldbc.utils.Explanation;
+
 /** Fourth complex read query. */
 public class Query4 implements ExecutableQuery {
 
@@ -28,6 +30,33 @@ public class Query4 implements ExecutableQuery {
     private static final String queryParameterFilename = "query_4_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)\\|(\\d+)";
     private static final int queryLimit = 10;
+    /** New topics. */
+    private static final String queryString =
+        "  SELECT Tag.name, COUNT(*) " +
+        "    FROM Tag, PersonKnowsPerson, " +
+        "         MessageHasCreatorPerson, Message, PostHasTagTag " +
+        "   WHERE ? = PersonKnowsPerson.person1Id " +
+        "     AND PersonKnowsPerson.person2Id = MessageHasCreatorPerson.personId " +
+        "     AND MessageHasCreatorPerson.messageId = Message.id " +
+        "     AND Message.id = PostHasTagTag.postId " +
+        "     AND PostHasTagTag.tagId = Tag.id " +
+        "     AND Message.creationDate >= ? " +
+        "     AND Message.creationDate < ? + ? * 24 * 60 * 60 * 1000 " +
+        "     AND NOT EXISTS " +
+        "         (SELECT * " +
+        "            FROM PersonKnowsPerson, " +
+        "                 MessageHasCreatorPerson, Message, " +
+        "                 PostHasTagTag " +
+        "           WHERE ? = PersonKnowsPerson.person1Id " +
+        "             AND PersonKnowsPerson.person2Id = MessageHasCreatorPerson.personId " +
+        "             AND MessageHasCreatorPerson.messageId = Message.id " +
+        "             AND Message.id = PostHasTagTag.postId " +
+        "             AND PostHasTagTag.tagId = Tag.id " +
+        "             AND Message.creationDate < ? " +
+        "         ) " +
+        "GROUP BY Tag.name " +
+        "ORDER BY COUNT(*) DESC, Tag.name " +
+        "   LIMIT ?";
 
     /** A minimal constructor. */
     private Query4() {}
@@ -38,7 +67,7 @@ public class Query4 implements ExecutableQuery {
     }
 
     /**
-     * New topics.
+     * Execute the query for the given inputs.
      * @param db          A database handle
      * @param personId    A person ID
      * @param startDdate  A date in milliseconds since 1/1/1970 00:00:00 GMT
@@ -54,32 +83,7 @@ public class Query4 implements ExecutableQuery {
 
         List<LdbcQuery4Result> result = new ArrayList<>();
 
-        PreparedStatement statement = db.prepareStatement(
-            "  SELECT Tag.name, COUNT(*) " +
-            "    FROM Tag, PersonKnowsPerson, " +
-            "         MessageHasCreatorPerson, Message, PostHasTagTag " +
-            "   WHERE ? = PersonKnowsPerson.person1Id " +
-            "     AND PersonKnowsPerson.person2Id = MessageHasCreatorPerson.personId " +
-            "     AND MessageHasCreatorPerson.messageId = Message.id " +
-            "     AND Message.id = PostHasTagTag.postId " +
-            "     AND PostHasTagTag.tagId = Tag.id " +
-            "     AND Message.creationDate >= ? " +
-            "     AND Message.creationDate < ? + ? * 24 * 60 * 60 * 1000 " +
-            "     AND NOT EXISTS " +
-            "         (SELECT * " +
-            "            FROM PersonKnowsPerson, " +
-            "                 MessageHasCreatorPerson, Message, " +
-            "                 PostHasTagTag " +
-            "           WHERE ? = PersonKnowsPerson.person1Id " +
-            "             AND PersonKnowsPerson.person2Id = MessageHasCreatorPerson.personId " +
-            "             AND MessageHasCreatorPerson.messageId = Message.id " +
-            "             AND Message.id = PostHasTagTag.postId " +
-            "             AND PostHasTagTag.tagId = Tag.id " +
-            "             AND Message.creationDate < ? " +
-            "         ) " +
-            "GROUP BY Tag.name " +
-            "ORDER BY COUNT(*) DESC, Tag.name " +
-            "   LIMIT ?");
+        PreparedStatement statement = db.prepareStatement(queryString);
         statement.setLong(1, personId);
         statement.setLong(2, startDate);
         statement.setLong(3, startDate);
@@ -100,6 +104,32 @@ public class Query4 implements ExecutableQuery {
     }
 
     /**
+     * Explain the query for the given inputs.
+     * @param db          A database handle
+     * @param personId    A person ID
+     * @param startDdate  A date in milliseconds since 1/1/1970 00:00:00 GMT
+     * @param duration    A duration in days
+     * @param limit       An upper bound on the size of results returned
+     * @return information about the query execution plan
+     * @throw SQLException if a problem occurs during the query's execution
+     */
+    public static ResultSet explain(Connection db,
+        long personId,
+        long startDate, int duration,
+        int limit) throws SQLException {
+
+        PreparedStatement statement = db.prepareStatement(Explanation.query + queryString);
+        statement.setLong(1, personId);
+        statement.setLong(2, startDate);
+        statement.setLong(3, startDate);
+        statement.setLong(4, duration);
+        statement.setLong(5, personId);
+        statement.setLong(6, startDate);
+        statement.setInt(7, limit);
+        return statement.executeQuery();
+    }
+
+    /**
      * Execute the query once for every query parameters.
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
@@ -117,6 +147,24 @@ public class Query4 implements ExecutableQuery {
             if (beVerbose)
                 print(personId, startDate, duration, r);
        }
+    }
+
+    /**
+     * Explain the query with the first set of query parameters.
+     * @param db               A database handle
+     * @param queryParameters  Stream of query input parameters
+     * @throw SQLException if a problem occurs during the query's execution
+     */
+    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+        if (queryParameters.nextLine()) {
+            long personId = queryParameters.getLong();
+            long startDate = queryParameters.getLong();
+            int duration = queryParameters.getInt();
+
+            ResultSet resultSet = explain(db, personId, startDate, duration, queryLimit);
+
+            ldbc.utils.Explanation.print(System.out, resultSet);
+        }
     }
 
     /**
