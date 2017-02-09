@@ -25,7 +25,7 @@ public class MicroBenchmark {
      * a given query.  It handles configuration, initialization, and
      * error handling.
      */
-    public static void executeQueriesWithParametersFromFile(ExecutableQuery query, String queryName, String queryParameterFilename, String queryParameterFileLinePattern) {
+    public static void executeQueryWithParametersFromFile(ExecutableQuery query, String queryName, String queryParameterFilename, String queryParameterFileLinePattern) {
 
         try {
 
@@ -37,7 +37,7 @@ public class MicroBenchmark {
             try {
 
                 Connection db = Db.connect(url, config.user(), config.password());
-                doExecuteQueriesWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.beVerbose());
+                doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.beVerbose());
 
             }
             catch (QueryParameterFile.QueryParameterFileNotFoundException e) {
@@ -68,18 +68,22 @@ public class MicroBenchmark {
     /**
      * Execute a query, once per parameter line read from a file.
      * @param query  Essentially a handle to a per-query defined executeQueries function
-     * @param db
+     * @param db  A database handle
      * @param queryParameterFilename  The source of the input query parameters
      * @param queryParameterFileLinePattern  A regular expression describing one line of parameter input
+     * @param measureLatency  Report execution latency if requested
+     * @param beVerbose  Output the result of each query if requested
+     * @throw QueryParameterFileNotFoundException if the parameter file is not found
+     * @throw SQLException if a problem occurs during the query's execution
      * This is the lower-level function.  We time the run here.
      */
-    private static void doExecuteQueriesWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
+    private static void doExecuteQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
         QueryParameterFile queryParameters = new QueryParameterFile(queryParameterFilename, queryParameterFileLinePattern);
 
         Timer timer = new Timer();
         timer.start();
 
-        query.executeQueries(db, queryParameters, beVerbose);
+        query.executeQuery(db, queryParameters, beVerbose);
 
         timer.stop();
 

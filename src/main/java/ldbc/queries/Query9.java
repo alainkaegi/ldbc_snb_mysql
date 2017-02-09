@@ -21,28 +21,31 @@ import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
 
+/** Ninth complex read query. */
 public class Query9 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query9";
     private static final String queryParameterFilename = "query_9_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
+    private static final int queryLimit = 20;
 
     /** A minimal constructor. */
     private Query9() {}
 
     /** A main entry point to run a microbenchmark. */
     public static void main(String[] args) {
-        MicroBenchmark.executeQueriesWithParametersFromFile(new Query9(), queryName, queryParameterFilename, queryParameterFileLinePattern);
+        MicroBenchmark.executeQueryWithParametersFromFile(new Query9(), queryName, queryParameterFilename, queryParameterFileLinePattern);
     }
 
     /**
-     * Recent messages by friends (ninth complex read query).
+     * Recent messages by friends.
      * @param db        A database handle
      * @param personId  A person ID
      * @param date      A date in milliseconds since 1/1/1970 00:00:00 GMT
      * @param limit     An upper bound on the size of results returned
      * @return Recent posts by friends
+     * @throw SQLException if a problem occurs during the query's execution
      */
     public static List<LdbcQuery9Result> query(Connection db,
         long personId,
@@ -96,17 +99,18 @@ public class Query9 implements ExecutableQuery {
     }
 
     /**
-     * Execute query 9 for microbenchmarking.
+     * Execute the query once for every query parameters.
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
      * @param beVerbose        Print query outputs if true
+     * @throw SQLException if a problem occurs during the query's execution
      */
-    public void executeQueries(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
+    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
         while (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long date = queryParameters.getLong();
 
-            List<LdbcQuery9Result> r = query(db, personId, date, 20);
+            List<LdbcQuery9Result> r = query(db, personId, date, queryLimit);
 
             if (beVerbose)
                 print(personId, new Date(date), r);
@@ -114,7 +118,7 @@ public class Query9 implements ExecutableQuery {
     }
 
     /**
-     * Pretty print the query 9 results.
+     * Pretty print the query results.
      * @param personId  Query 9 parameter 1
      * @param date      Query 9 parameter 2
      * @param results   Query 9 results

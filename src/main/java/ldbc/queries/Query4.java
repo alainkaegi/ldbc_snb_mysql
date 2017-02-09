@@ -20,29 +20,32 @@ import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
 
+/** Fourth complex read query. */
 public class Query4 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query4";
     private static final String queryParameterFilename = "query_4_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)\\|(\\d+)";
+    private static final int queryLimit = 10;
 
     /** A minimal constructor. */
     private Query4() {}
 
     /** A main entry point to run a microbenchmark. */
     public static void main(String[] args) {
-        MicroBenchmark.executeQueriesWithParametersFromFile(new Query4(), queryName, queryParameterFilename, queryParameterFileLinePattern);
+        MicroBenchmark.executeQueryWithParametersFromFile(new Query4(), queryName, queryParameterFilename, queryParameterFileLinePattern);
     }
 
     /**
-     * New topics (fourth complex read query).
+     * New topics.
      * @param db          A database handle
      * @param personId    A person ID
      * @param startDdate  A date in milliseconds since 1/1/1970 00:00:00 GMT
      * @param duration    A duration in days
      * @param limit       An upper bound on the size of results returned
      * @return topics first created in the range provided
+     * @throw SQLException if a problem occurs during the query's execution
      */
     public static List<LdbcQuery4Result> query(Connection db,
         long personId,
@@ -97,18 +100,19 @@ public class Query4 implements ExecutableQuery {
     }
 
     /**
-     * Execute query 4 for microbenchmarking.
+     * Execute the query once for every query parameters.
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
      * @param beVerbose        Print query outputs if true
+     * @throw SQLException if a problem occurs during the query's execution
      */
-    public void executeQueries(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
+    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
         while (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long startDate = queryParameters.getLong();
             int duration = queryParameters.getInt();
 
-            List<LdbcQuery4Result> r = query(db, personId, startDate, duration, 10);
+            List<LdbcQuery4Result> r = query(db, personId, startDate, duration, queryLimit);
 
             if (beVerbose)
                 print(personId, startDate, duration, r);
@@ -116,7 +120,7 @@ public class Query4 implements ExecutableQuery {
     }
 
     /**
-     * Pretty print the query 4 results.
+     * Pretty print the query results.
      * @param personId   Query 4 parameter 1
      * @param startDate  Query 4 parameter 2
      * @param duration   Query 4 parameter 3

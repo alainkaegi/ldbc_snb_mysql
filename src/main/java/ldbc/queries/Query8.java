@@ -21,27 +21,30 @@ import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
 
+/** Eigth complex read query. */
 public class Query8 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query8";
     private static final String queryParameterFilename = "query_8_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)";
+    private static final int queryLimit = 20;
 
     /** A minimal constructor. */
     private Query8() {}
 
     /** A main entry point to run a microbenchmark. */
     public static void main(String[] args) {
-        MicroBenchmark.executeQueriesWithParametersFromFile(new Query8(), queryName, queryParameterFilename, queryParameterFileLinePattern);
+        MicroBenchmark.executeQueryWithParametersFromFile(new Query8(), queryName, queryParameterFilename, queryParameterFileLinePattern);
     }
 
     /**
-     * Recent replies (eigth complex read query).
+     * Recent replies.
      * @param db        A database handle
      * @param personId  A person ID
      * @param limit     An upper bound on the size of results returned
-     * @return The person's most recent replies.
+     * @return The person's most recent replies
+     * @throw SQLException if a problem occurs during the query's execution
      */
     public static List<LdbcQuery8Result> query(Connection db,
         long personId,
@@ -81,16 +84,17 @@ public class Query8 implements ExecutableQuery {
     }
 
     /**
-     * Execute query 8 for microbenchmarking.
+     * Execute the query once for every query parameters.
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
      * @param beVerbose        Print query outputs if true
+     * @throw SQLException if a problem occurs during the query's execution
      */
-    public void executeQueries(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
+    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
         while (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
 
-            List<LdbcQuery8Result> r = query(db, personId, 20);
+            List<LdbcQuery8Result> r = query(db, personId, queryLimit);
 
             if (beVerbose)
                 print(personId, r);
@@ -98,7 +102,7 @@ public class Query8 implements ExecutableQuery {
     }
 
     /**
-     * Pretty print the query 8 results.
+     * Pretty print the query results.
      * @param personId  Query 8 parameter 1
      * @param results   Query 8 results
      */
