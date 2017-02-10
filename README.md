@@ -56,12 +56,22 @@ straightforward to choose a different naming discipline.
 
 Set up MySQL
 ------------
-- sudo usermod -a -G mysql $(USER)  (must log out and back in to take effect)
+- sudo usermod -a -G mysql $USER
+  (must log out and back in to take effect)
 - sudo chmod g+rwx /var/lib/mysql-files/
+  (I had to repeat this step on occasion; perhaps after a software update?)
 - add these lines to /etc/mysql/my.cnf:
+```
 [mysqld]
 character-set-server = utf8
 character-set-filesystem = utf8
+```
+- restart the mysql server
+- CREATE USER 'ldbc'@'localhost' IDENTIFIED BY '<password>';
+  (note the password for later use in these instructions)
+- CREATE DATABASE ldbc;
+- GRANT ALL PRIVILEGES ON ldbc.* TO 'ldbc'@'localhost';
+- GRANT FILE ON *.* TO 'ldbc'@'localhost';
 
 Generate the Dataset
 --------------------
@@ -115,8 +125,8 @@ The LDBC data generator produces strings longer than promised by the
 benchmark specification [1].  In particular I have found that some
 forum titles exceed size 40, some message content exceed 2000, some
 place names exceed size 40, some tag names exceed size 40, some email
-addresses exceed size 40.  I have used sizes 100, 2100, 100, 100, and
-80 respectively.
+addresses exceed size 40, and organization's names exceed 40.  I have
+used sizes 100, 2100, 100, 100, 80, and 150 respectively.
 
 References
 ==========

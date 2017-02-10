@@ -165,6 +165,7 @@ public class BulkLoader {
             case 'T': // transform an ISO 8601 time into epoch
             case 'D': // transform a date into epoch
                 sb.append(match.group(inputFieldIndex + 1));
+                sb.append('|');
                 inputFieldIndex++;
                 break;
             case 'X': // delete
@@ -172,17 +173,18 @@ public class BulkLoader {
                 break;
             case '0': // fill with nothing
                 sb.append("nothing");
+                sb.append('|');
                 break;
             case 'S': // swap two neighboring columns
                 if (firstColumnIsSwapped)
                     sb.append(match.group(inputFieldIndex));
                 else
                     sb.append(match.group(inputFieldIndex + 2));
+                sb.append('|');
                 firstColumnIsSwapped = true;
                 inputFieldIndex++;
                 break;
             }
-            sb.append('|');
             filterIndex++;
         }
         return sb.toString();
@@ -199,6 +201,7 @@ public class BulkLoader {
             switch (f[filterIndex]) {
             case 'C': // copy
                 sb.append(match.group(inputFieldIndex + 1));
+                sb.append('|');
                 inputFieldIndex++;
                 break;
             case 'X': // delete
@@ -206,24 +209,27 @@ public class BulkLoader {
                 break;
             case 'T': // transform an ISO 8601 time into epoch
                 sb.append(timeFormat.parse(match.group(inputFieldIndex + 1)).getTime());
+                sb.append('|');
                 inputFieldIndex++;
                 break;
             case 'D': // transform a date into epoch
                 sb.append(dateFormat.parse(match.group(inputFieldIndex + 1)).getTime());
+                sb.append('|');
                 inputFieldIndex++;
                 break;
             case '0': // fill with nothing
+                sb.append('|');
                 break;
             case 'S': // swap two neighboring columns
                 if (firstColumnIsSwapped)
                     sb.append(match.group(inputFieldIndex));
                 else
                     sb.append(match.group(inputFieldIndex + 2));
+                sb.append('|');
                 firstColumnIsSwapped = true;
                 inputFieldIndex++;
                 break;
             }
-            sb.append('|');
             filterIndex++;
         }
         return sb.toString();
@@ -289,7 +295,7 @@ public class BulkLoader {
         new TableInformation(
             "Organisation",
             "id BIGINT NOT NULL, " +
-                "name VARCHAR(40), " +
+                "name VARCHAR(150), " +
                 "PRIMARY KEY (id)",
             "organisation.csv",
             "CXCX"
