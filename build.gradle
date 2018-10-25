@@ -16,7 +16,7 @@ dependencies {
     compile "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
 }
 
-task loader(type: JavaExec) {
+task load(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'ldbc.loader.BulkLoader'
 }
