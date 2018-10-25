@@ -115,12 +115,16 @@ public class Query2 implements ExecutableQuery {
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
      * @param beVerbose        Print query outputs if true
+     * @param printHeapUsage   Print heap usage if true
      * @throw SQLException if a problem occurs during the query's execution
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
+    public void executeQueries(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         while (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long date = queryParameters.getLong();
+
+            if (printHeapUsage)
+                HeapUsage.print();
 
             List<LdbcQuery2Result> r = query(db, personId, date, queryLimit);
 

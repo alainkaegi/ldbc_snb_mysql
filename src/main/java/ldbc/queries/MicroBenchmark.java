@@ -40,7 +40,7 @@ public class MicroBenchmark {
                 if (config.explain())
                     doExplainQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern);
                 else
-                    doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.beVerbose());
+                    doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.printHeapUsage(), config.beVerbose());
 
             }
             catch (QueryParameterFile.QueryParameterFileNotFoundException e) {
@@ -75,23 +75,25 @@ public class MicroBenchmark {
      * @param queryParameterFilename  The source of the input query parameters
      * @param queryParameterFileLinePattern  A regular expression describing one line of parameter input
      * @param measureLatency  Report execution latency if requested
+     * @param printHeapUsage  Print heap usage if requested
      * @param beVerbose  Output the result of each query if requested
      * @throw QueryParameterFileNotFoundException if the parameter file is not found
      * @throw SQLException if a problem occurs during the query's execution
      * This is the lower-level function.  We time the run here.
      */
-    private static void doExecuteQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
+    private static void doExecuteQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean printHeapUsage, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
         QueryParameterFile queryParameters = new QueryParameterFile(queryParameterFilename, queryParameterFileLinePattern);
 
         Timer timer = new Timer();
         timer.start();
 
-        query.executeQuery(db, queryParameters, beVerbose);
+        query.executeQueries(db, queryParameters, beVerbose, printHeapUsage);
 
         timer.stop();
 
         if (measureLatency)
             timer.print();
+
     }
 
     /**

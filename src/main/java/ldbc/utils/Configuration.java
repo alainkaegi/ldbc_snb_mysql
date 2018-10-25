@@ -28,6 +28,7 @@ public class Configuration {
     private static final String configFilename = "params.ini";
 
     private boolean measureLatency;
+    private boolean printHeapUsage;
     private boolean beVerbose;
     private boolean explain;
     private String database;
@@ -41,6 +42,7 @@ public class Configuration {
             Properties config = new Properties();
             config.load(new FileInputStream(configFilename));
             measureLatency = config.getProperty("measureLatency", "false").equals("true");
+            printHeapUsage = config.getProperty("printHeapUsage", "false").equals("true");
             beVerbose = config.getProperty("beVerbose", "false").equals("true");
             explain = config.getProperty("explain", "false").equals("true");
             if ((database = config.getProperty("database")) == null) throw new MissingConfigurationException(configFilename + ": database: No such field defined");
@@ -60,6 +62,7 @@ public class Configuration {
     public boolean beVerbose() { return beVerbose; }
     public boolean measureLatency() { return measureLatency; }
     public boolean explain() { return explain; }
+    public boolean printHeapUsage() { return printHeapUsage; }
     public String database() { return database; }
     public String user() { return user; }
     public String password() { return password; }

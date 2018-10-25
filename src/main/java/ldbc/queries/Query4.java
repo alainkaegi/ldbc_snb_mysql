@@ -134,13 +134,17 @@ public class Query4 implements ExecutableQuery {
      * @param db               A database handle
      * @param queryParameters  Stream of query input parameters
      * @param beVerbose        Print query outputs if true
+     * @param printHeapUsage   Print heap usage if true
      * @throw SQLException if a problem occurs during the query's execution
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose) throws SQLException {
+    public void executeQueries(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         while (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long startDate = queryParameters.getLong();
             int duration = queryParameters.getInt();
+
+            if (printHeapUsage)
+                HeapUsage.print();
 
             List<LdbcQuery4Result> r = query(db, personId, startDate, duration, queryLimit);
 
