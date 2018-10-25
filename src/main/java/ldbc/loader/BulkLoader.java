@@ -76,7 +76,7 @@ public class BulkLoader {
             System.exit(1);
         }
         catch (SQLException e) {
-            System.err.println(progName + ": " + e.getMessage());
+            System.err.println(progName + ": Error while loading data in the database: " + e.getMessage());
             System.exit(1);
         }
     }
