@@ -1,6 +1,4 @@
-/**
- * A utility to read query parameter files.
- *
+/*
  * Copyright © 2017 Alain Kägi
  */
 
@@ -14,20 +12,22 @@ import java.util.regex.Pattern;
 import java.util.Scanner;
 
 /**
- * A helper class to read a query parameter file used for microbenchmarking.
+ * The QueryParameterFile class define functions to read a query
+ * substitution parameter file used for microbenchmarking.
  *
- * A query parameter file consists of lines separated by newlines.
- * The first line is a header which is ignored.  The other lines all
- * follow a pattern defined by a regular expression passed in to the
- * constructor.
+ * A query substitution parameter file consists of lines separated by
+ * newlines.  The first line is a header which is ignored.  The other
+ * lines all follow a pattern defined by a regular expression passed
+ * in to the constructor.
  *
  * The accessor functions return valid data only if the caller has
  * first called nextLine() and that function returned true.  The
  * accessor functions are not idempotent.  The caller must be aware of
- * the file structure (it defines the query parameter line pattern).
- * In other words, the caller must invoke an accessor function only
- * only once per item on each line and must invoke the accessor
- * function of the proper type for the next parameter to be read.
+ * the file structure (it defines the query substitution parameter
+ * line pattern).  In other words, the caller must invoke an accessor
+ * function only only once per item on each line and must invoke the
+ * accessor function of the proper type for the next parameter to be
+ * read.
  */
 class QueryParameterFile {
 
@@ -37,6 +37,12 @@ class QueryParameterFile {
     private MatchResult currentMatch;
     private int currentGroup;
 
+    /**
+     * Construct a query substitution parameter file object.
+     * @param queryParameterFilename     Name of the file containing a set of substitution parameters
+     * @param queryParameterLinePattern  Regular expression describing a line of the parameter file
+     * @throws QueryParameterFileNotFoundException if the parameter file is nout found
+     */
     public QueryParameterFile(String queryParameterFilename, String queryParameterLinePattern) throws QueryParameterFileNotFoundException {
         this.queryParameterFilename = queryParameterFilename;
         this.queryParameterFileScanner = openFileAndSkipHeader(queryParameterFilename);
@@ -44,7 +50,7 @@ class QueryParameterFile {
     }
 
     /**
-     * Read the next line of query input parameters.
+     * Read the next line of query substitution parameters.
      * @return false if the scanner has reached the end of file
      */
     public boolean nextLine() {
@@ -56,18 +62,34 @@ class QueryParameterFile {
         return true;
     }
 
-    public Integer getInt() {
+    /**
+     * Scan the next token of the parameter file as an int
+     * @return the scanned int
+     */
+    public int getInt() {
         return Integer.valueOf(currentMatch.group(currentGroup++));
     }
 
-    public Long getLong() {
+    /**
+     * Scan the next token of the parameter file as a long
+     * @return the scanned long
+     */
+    public long getLong() {
         return Long.valueOf(currentMatch.group(currentGroup++));
     }
 
+    /**
+     * Scan the next token of the parameter file as a long interpreted as a Date
+     * @return the scanned Date
+     */
     public Date getDate() {
         return new Date(Long.valueOf(currentMatch.group(currentGroup++)));
     }
 
+    /**
+     * Scan the next token of the parameter file as a String
+     * @return the scanned String
+     */
     public String getString() {
         return currentMatch.group(currentGroup++);
     }

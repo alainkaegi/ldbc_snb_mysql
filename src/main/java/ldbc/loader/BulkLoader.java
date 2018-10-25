@@ -1,6 +1,4 @@
-/**
- * A MySql bulkloader for the LDBC SNB dataset.
- *
+/*
  * Copyright © 2017 Alain Kägi
  */
 
@@ -34,14 +32,29 @@ import java.util.TimeZone;
 import ldbc.utils.Configuration;
 import ldbc.utils.Db;
 
+/**
+ * The BulkLoader class implements an application that loads an LDBC
+ * Social Network Benchmark (SNB) dataset in a MySQL database.
+ */
 public class BulkLoader {
+
+    // Suppress the default constructor.
+    private BulkLoader() {}
 
     private static String progName = "BulkLoader";
 
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private static SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
-    public static void main (final String[] args) {
+    /**
+     * Load an LDBC SNB dataset in a MySQL database.
+     *
+     * <p>A configuration file called <tt>params.ini</tt> specifies
+     * the loading parameters.
+     *
+     * @param args  Unused
+     */
+    public static void main(String[] args) {
 
         try {
             Configuration config = new Configuration();

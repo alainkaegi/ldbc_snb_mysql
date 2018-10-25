@@ -10,13 +10,13 @@ password:
 # Location of the substitution parameter files containing files such as query_1_param.txt and others; please update as necessary
 parameterFilesDirectory:/home/user/ldbc_snb_datagen/substitution_parameters
 
-# Location of the dataset in the CVS format, one entitity/relation per file (i.e., merged)
+# Location of the dataset in CSV format, one entitity/relation per file (i.e., merged)
 datasetDirectory:/home/user/ldbc_snb_datagen/social_network_merged
 
 # Uncomment next line for verbose output (i.e., results of the queries)
 #beVerbose:true
 
-# Uncomment next line for timing  output
+# Uncomment next line for timing output
 #measureLatency:true
 
 # Uncomment next line to print heap usage before every query

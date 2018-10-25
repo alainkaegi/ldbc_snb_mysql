@@ -1,6 +1,4 @@
-/**
- * A configuration utility for running this LDBC SNB benchmark.
- *
+/*
  * Copyright © 2017 Alain Kägi
  */
 
@@ -12,38 +10,48 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
- * Define a configuration framework for microbenchmarking queries.
+ * This class defines a configuration framework to run microbenchmarks
+ * derived from the LDBC Social Network Benchmark (SNB).
  *
- * A configuration file whose name is defined below must exist in the
+ * <p>A configuration file named <tt>params.ini</tt> must exist in the
  * root directory of this project.  Its structure must adhere to the
- * standard defined in java.util.Properties.  It must define a
- * "database" URL, a database "user" and her "password", a
+ * standard defined in <tt>java.util.Properties</tt>.  It must define
+ * a "database" URL, a database "user" and her "password", a
  * "parameterFilesDirectory" holding query input parameter files, and
- * a "datasetDirectory" containing the merged generated dataset in
- * the CVS format.  Optional parameters are "measureLatency",
- * "beVerbose", and "explain".
+ * a "datasetDirectory" containing the merged generated dataset in the
+ * CSV format.  Optional parameters are "beVerbose", "measureLatency",
+ * "printHeapUsage", and "explain".
  */
 public class Configuration {
 
     private static final String configFilename = "params.ini";
 
+    // Optional properties.
+    private boolean beVerbose;
     private boolean measureLatency;
     private boolean printHeapUsage;
-    private boolean beVerbose;
     private boolean explain;
+
+    // Required properties.
     private String database;
     private String user;
     private String password;
     private String parameterFilesDirectory;
     private String datasetDirectory;
 
+    /**
+     * Construct a configuration object.
+     * @throws ConfigurationFileNotFoundException if params.ini is not found
+     * @throws ConfigurationIOException if a problem occurs while reading params.ini
+     * @throws MissingConfigurationException if a required property if missing
+     */
     public Configuration() throws ConfigurationFileNotFoundException, ConfigurationIOException, MissingConfigurationException {
         try {
             Properties config = new Properties();
             config.load(new FileInputStream(configFilename));
+            beVerbose = config.getProperty("beVerbose", "false").equals("true");
             measureLatency = config.getProperty("measureLatency", "false").equals("true");
             printHeapUsage = config.getProperty("printHeapUsage", "false").equals("true");
-            beVerbose = config.getProperty("beVerbose", "false").equals("true");
             explain = config.getProperty("explain", "false").equals("true");
             if ((database = config.getProperty("database")) == null) throw new MissingConfigurationException(configFilename + ": database: No such field defined");
             if ((user = config.getProperty("user")) == null) throw new MissingConfigurationException(configFilename + ": user: No such field defined");
@@ -59,14 +67,58 @@ public class Configuration {
         }
     }
 
+    /**
+     * Should we be verbose?
+     * @return true if we must be verbose
+     */
     public boolean beVerbose() { return beVerbose; }
+
+    /**
+     * Should we measure execution times?
+     * @return true if we must measure execution times
+     */
     public boolean measureLatency() { return measureLatency; }
+
+    /**
+     * Should we report a query execution plan?
+     * @return true if we must report a query execution plan
+     */
     public boolean explain() { return explain; }
+
+    /**
+     * Should we report heap usage?
+     * @return true if we must report heap usage
+     */
     public boolean printHeapUsage() { return printHeapUsage; }
+
+    /**
+     * A name for the database.
+     * @return a name for the database
+     */
     public String database() { return database; }
+
+    /**
+     * The name of a user with sufficient privileges to access and to modify the associated database.
+     * @return a username to access the associated database
+     */
     public String user() { return user; }
+
+    /**
+     * The password of the user to access the database.
+     * @return the password associated with the username
+     */
     public String password() { return password; }
+
+    /**
+     * The location of the substitution parameter files to microbenchmark the database queries defined in the LDBC Social Network Benchmark (SNB).
+     * @return the location of the LDBC SNB substitution parameters
+     */
     public String parameterFilesDirectory() { return parameterFilesDirectory; }
+
+    /**
+     * The location of the (merged) dataset with which to load a database to be used with the LDBC Social Network Benchmark (SNB).
+     * @return the location of the LDBC SNB dataset to seed the database
+     */
     public String datasetDirectory() { return datasetDirectory; }
 
     /** Define an exception to be thrown when the configuration file is not found. */
