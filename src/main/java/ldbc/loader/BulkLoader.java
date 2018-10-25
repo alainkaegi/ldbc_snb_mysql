@@ -559,6 +559,11 @@ public class BulkLoader {
 
     static IndexInformation[] indices = {
         new IndexInformation(
+            "TagName",
+            "Tag",
+            "name"
+        ),
+        new IndexInformation(
             "KnowsPerson1Id",
             "PersonKnowsPerson",
             "person1Id"
@@ -584,9 +589,99 @@ public class BulkLoader {
             "messageId"
         ),
         new IndexInformation(
+            "ReplyOfCommentId",
+            "CommentReplyOfMessage",
+            "commentId"
+        ),
+        new IndexInformation(
             "HasTagPostId",
             "PostHasTagTag",
             "postId"
+        ),
+        new IndexInformation(
+            "HasTagTagId",
+            "PostHasTagTag",
+            "tagId"
+        ),
+        new IndexInformation(
+            "HasMemberPersonId",
+            "ForumHasMemberPerson",
+            "personId"
+        ),
+        new IndexInformation(
+            "ContainerOfPostId",
+            "ForumContainerOfPost",
+            "postId"
+        ),
+        new IndexInformation(
+            "LikesPostId",
+            "PersonLikesPost",
+            "postId"
+        ),
+        new IndexInformation(
+            "LikesCommentId",
+            "PersonLikesComment",
+            "commentId"
+        ),
+        new IndexInformation(
+            "IsLocatedInPersonId",
+            "PersonIsLocatedInPlace",
+            "personId"
+        ),
+        new IndexInformation(
+            "IsLocatedInPlaceId",
+            "PersonIsLocatedInPlace",
+            "placeId"
+        ),
+        new IndexInformation(
+            "HasTypeTagId",
+            "TagHasTypeTagClass",
+            "tagId"
+        ),
+        new IndexInformation(
+            "EmailPersonId",
+            "PersonEmailEmailAddress",
+            "personId"
+        ),
+        new IndexInformation(
+            "SpeaksPersonId",
+            "PersonSpeaksLanguage",
+            "personId"
+        ),
+        new IndexInformation(
+            "StudyAtPersonId",
+            "PersonStudyAtOrganisation",
+            "personId"
+        ),
+        new IndexInformation(
+            "WorkAtPersonId",
+            "PersonWorkAtOrganisation",
+            "personId"
+        ),
+        new IndexInformation(
+            "IsLocatedOrganisationId",
+            "OrganisationIsLocatedInPlace",
+            "organisationId"
+        ),
+        new IndexInformation(
+            "ContainerOfForumId",
+            "ForumContainerOfPost",
+            "forumId"
+        ),
+        new IndexInformation(
+            "IsLocatedInPostId",
+            "PostIsLocatedInPlace",
+            "postId"
+        ),
+        new IndexInformation(
+            "IsLocatedInCommentId",
+            "CommentIsLocatedInPlace",
+            "commentId"
+        ),
+        new IndexInformation(
+            "IsPartOfPlace1Id",
+            "PlaceIsPartOfPlace",
+            "place1Id"
         ),
     };
 

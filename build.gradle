@@ -21,14 +21,39 @@ task load(type: JavaExec) {
     main = 'ldbc.loader.BulkLoader'
 }
 
+task query1(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query1'
+}
+
 task query2(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'ldbc.queries.Query2'
 }
 
+task query3(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query3'
+}
+
 task query4(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'ldbc.queries.Query4'
+}
+
+task query5(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query5'
+}
+
+task query6(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query6'
+}
+
+task query7(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query7'
 }
 
 task query8(type: JavaExec) {
@@ -39,4 +64,29 @@ task query8(type: JavaExec) {
 task query9(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'ldbc.queries.Query9'
+}
+
+task query10(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query10'
+}
+
+task query11(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query11'
+}
+
+task query12(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query12'
+}
+
+task query13(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query13'
+}
+
+task query14(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'ldbc.queries.Query14'
 }

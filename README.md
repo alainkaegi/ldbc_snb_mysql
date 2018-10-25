@@ -113,12 +113,12 @@ gradle load
 Run a Complex Query
 -------------------
 
-gradle queryX, where X is 2, 4, 8 or 9.
+gradle queryX, where X is between 1 and 14 inclusive.
 
 Known Issues
 ============
 
-The sort order for complex query 4 is slightly different than my
+The sort order for complex query 4 and 6 is slightly different than my
 Neo4j-based LDBC SNB implementation.
 
 The LDBC data generator produces strings longer than promised by the
