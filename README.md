@@ -65,6 +65,7 @@ Set up MySQL
 [mysqld]
 character-set-server = utf8
 character-set-filesystem = utf8
+collation-server = utf8_bin
 default_time_zone = "+00:00"
 ```
 - restart the mysql server
@@ -164,9 +165,6 @@ implementation [2].
 
 Known Issues
 ============
-
-The sort order for complex query 4 and 6 is slightly different than my
-Neo4j-based LDBC SNB implementation.
 
 The LDBC data generator produces strings longer than promised by the
 benchmark specification [1].  In particular I have found that some
