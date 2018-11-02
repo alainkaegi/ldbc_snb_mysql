@@ -335,6 +335,29 @@ public class LdbcUtils {
     }
 
     /**
+     * Return the original post of the given message.
+     *
+     * A message is either a post or a comment; a comment is either a
+     * reply to a post or a reply to a comment.  This function returns
+     * the original post associated with the given message, following
+     * the Reply Of relationship.  If the given message is a post,
+     * this function returns that post.
+     * @param db         A database handle
+     * @param messageId  The message's unique identifier
+     * @return the identifier of the original post associated with the given message
+     * @throws SQLException if a database access error occurs
+     */
+    static public long getParentPostId(Connection db, long messageId) throws SQLException {
+        long parentPostId;
+        long nextId = messageId;
+        do {
+            parentPostId = nextId;
+            nextId = getParentMessageId(db, parentPostId);
+        } while (nextId != -1);
+        return parentPostId;
+    }
+
+    /**
      * Return true if the message is a post.
      * @param db         A database handle
      * @param messageId  The message's unique identifier
