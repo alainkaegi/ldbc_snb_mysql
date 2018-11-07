@@ -115,6 +115,52 @@ Run a Complex Query
 
 gradle queryX, where X is between 1 and 14 inclusive.
 
+Validation
+==========
+
+I validated this implementation following the directions given with
+the LDBC SNB interactive validation project [4].  These steps are very
+similar to those I followed when validating my Neo4j LDBC SNB
+implementation [2].
+
+1 Clone the project LDBC SNB interactive validation project in
+  ../ldbc_snb_interactive_validation/
+
+2 Untar the content of
+  ldbc_snb_interactive_validation/neo4j/neo4j--validation_set.tar.gz
+  in, say, ../ldbc_snb_interactive_validation/neo4j/e/
+
+3 Concatenate the CSV content of
+  ldbc_snb_interactive_validation/neo4j/e/social_network/string_date/
+  into
+  ../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date_merged/
+  (e.g., ./scripts/cat.sh
+  ../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date/
+  ../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date_merged/)
+
+4 Load the merged CSV files into the MySQL ldbc database; use the same
+  params.ini file as for microbenchmarking except for changing the
+  'datasetDirectory' parameter to
+  '../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date_merged'
+
+5 Copy the property file provided with that project and name it
+  validation.properties (e.g., cp
+  ../ldbc_snb_interactive_validation/neo4j/readwrite_neo4j--ldbc_driver_config--db_validation.properties
+  ./validation.properties); edit the LDBC driver configuration section
+  of validation.properties; set 'database' to 'ldbc.glue.MySQLDb',
+  'validate_database' to
+  '../ldbc_snb_interactive_validation/neo4j/e/validation_params.csv',
+  and 'ldbc.snb.interactive.parameters_dir' to
+  '../ldbc_snb_interactive_validation/neo4j/e/substitution_parameters/';
+  add fields 'url', 'user' and 'password'; set 'url' to
+  'jdbc:mysql://localhost/ldbc', and set 'user' and 'password' to the
+  same values specified in params.ini
+
+6 Issue the command 'gradle validate'
+
+7 Important: you must reload the validation database from scratch
+  (step 4) every time you run validation
+
 Known Issues
 ============
 
