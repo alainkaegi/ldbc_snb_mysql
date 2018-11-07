@@ -65,6 +65,7 @@ Set up MySQL
 [mysqld]
 character-set-server = utf8
 character-set-filesystem = utf8
+default_time_zone = "+00:00"
 ```
 - restart the mysql server
 - CREATE USER 'ldbc'@'localhost' IDENTIFIED BY '<password>';
