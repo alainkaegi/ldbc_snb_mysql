@@ -56,6 +56,9 @@ public class BulkLoader {
      */
     public static void main(String[] args) {
 
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        timeFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         try {
             Configuration config = new Configuration();
             String url = "jdbc:mysql://localhost/" + config.database();
