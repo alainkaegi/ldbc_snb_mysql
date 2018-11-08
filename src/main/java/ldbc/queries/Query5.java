@@ -12,11 +12,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.TimeZone;
 
 import java.text.SimpleDateFormat;
+
+import ldbc.helpers.Query5SortResult;
 
 import ldbc.utils.Explanation;
 import ldbc.utils.LdbcUtils;
@@ -37,53 +42,53 @@ public class Query5 implements ExecutableQuery {
     // Messages created by friends and friends of friends who joined
     // their forums after the given date.
     // Parameter 1: person identifier
-    // Parameter 2: date
+    // Parameter 2: person identifier (same as parameter 1)
     // Parameter 3: person identifier (same as parameter 1)
-    // Parameter 4: person identifier (same as parameter 1)
-    // Parameter 5: date (same as parameter 2)
-    // Parameter 6: an upper bound on the number of results returned
+    // Parameter 4: date
     private static String queryString =
-        "   SELECT Forum.title, " +
-        "          T.count " +
-        "     FROM (  SELECT U.forumId, " +
-        "                    COUNT(*) AS count " +
-        "               FROM (  SELECT ForumContainerOfPost.forumId, " +
-        "                              MessageHasCreatorPerson.messageId, " +
-        "                              K.person2Id " +
-        "                         FROM PersonKnowsPerson AS K, " +
-        "                              ForumHasMemberPerson, " +
-        "                              MessageHasCreatorPerson, " +
-        "                              ForumContainerOfPost " +
-        "                        WHERE K.person1Id = ? " +
-        "                          AND ForumHasMemberPerson.personId = K.person2Id " +
-        "                          AND ForumHasMemberPerson.joinDate > ? " +
-        "                          AND ForumHasMemberPerson.forumId = ForumContainerOfPost.forumId " +
-        "                          AND MessageHasCreatorPerson.personId = K.person2Id " +
-        "                          AND ForumContainerOfPost.postId = MessageHasCreatorPerson.messageId " +
-        "                        UNION " +
-        "                       SELECT ForumContainerOfPost.forumId, " +
-        "                              MessageHasCreatorPerson.messageId, " +
-        "                              K2.person2Id " +
-        "                         FROM PersonKnowsPerson AS K1, " +
-        "                              PersonKnowsPerson AS K2, " +
-        "                              ForumHasMemberPerson, " +
-        "                              MessageHasCreatorPerson, " +
-        "                              ForumContainerOfPost " +
-        "                        WHERE K1.person1Id = ? " +
-        "                          AND K2.person1Id = K1.person2Id " +
-        "                          AND K2.person2Id <> ? " +
-        "                          AND ForumHasMemberPerson.personId = K2.person2Id " +
-        "                          AND ForumHasMemberPerson.joinDate > ? " +
-        "                          AND ForumHasMemberPerson.forumId = ForumContainerOfPost.forumId " +
-        "                          AND MessageHasCreatorPerson.personId = K2.person2Id " +
-        "                          AND ForumContainerOfPost.postId = MessageHasCreatorPerson.messageId " +
-        "                    ) AS U " +
-        "           GROUP BY U.forumId " +
-        "           ORDER BY COUNT(*) DESC, " +
-        "                    U.forumId LIMIT ? " +
-        "          ) AS T, " +
-        "          Forum " +
-        "    WHERE T.forumId = Forum.id";
+        "   SELECT ForumHasMemberPerson.forumId, " +
+        "          ForumContainerOfPost.postId " +
+        "     FROM (SELECT PersonKnowsPerson.person2Id AS id " +
+        "             FROM PersonKnowsPerson " +
+        "            WHERE PersonKnowsPerson.person1Id = ? " +
+        "            UNION " +
+        "           SELECT K2.person2Id AS id " +
+        "             FROM PersonKnowsPerson AS K1, " +
+        "                  PersonKnowsPerson AS K2 " +
+        "            WHERE K1.person1Id = ?  " +
+        "              AND K2.person1Id = K1.person2Id " +
+        "              AND K2.person2Id <> ? " +
+        "          ) AS Friend, " +
+        "          ForumHasMemberPerson, " +
+        "          ForumContainerOfPost, " +
+        "          MessageHasCreatorPerson " +
+        "    WHERE ForumHasMemberPerson.personId = Friend.id " +
+        "      AND ForumHasMemberPerson.joinDate > ? " +
+        "      AND ForumContainerOfPost.forumId = ForumHasMemberPerson.forumId " +
+        "      AND MessageHasCreatorPerson.personId = Friend.id " +
+        "      AND ForumContainerOfPost.postId = MessageHasCreatorPerson.messageId";
+    // Subset of the previous, main query: Forums joined by friends
+    // and friends of friends after the given date.
+    // Parameter 1: person identifier
+    // Parameter 2: person identifier (same as parameter 1)
+    // Parameter 3: person identifier (same as parameter 1)
+    // Parameter 4: date
+    private static String subordinateQueryString =
+        "   SELECT ForumHasMemberPerson.forumId " +
+        "     FROM (SELECT PersonKnowsPerson.person2Id AS id " +
+        "             FROM PersonKnowsPerson " +
+        "            WHERE PersonKnowsPerson.person1Id = ? " +
+        "            UNION " +
+        "           SELECT K2.person2Id AS id " +
+        "             FROM PersonKnowsPerson AS K1, " +
+        "                  PersonKnowsPerson AS K2 " +
+        "            WHERE K1.person1Id = ?  " +
+        "              AND K2.person1Id = K1.person2Id " +
+        "              AND K2.person2Id <> ? " +
+        "          ) AS Friend, " +
+        "          ForumHasMemberPerson " +
+        "    WHERE ForumHasMemberPerson.personId = Friend.id " +
+        "      AND ForumHasMemberPerson.joinDate > ?";
 
     /** A minimal constructor. */
     private Query5() {}
@@ -113,22 +118,83 @@ public class Query5 implements ExecutableQuery {
 
         List<LdbcQuery5Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, date);
-        s.setLong(3, personId);
-        s.setLong(4, personId);
-        s.setLong(5, date);
-        s.setInt(6, queryLimit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery5Result result = new LdbcQuery5Result(
-                r.getString("Forum.title"),
-                r.getInt("T.count"));
-            results.add(result);
+        try {
+            db.setAutoCommit(false);
+
+            PreparedStatement s;
+            ResultSet r;
+
+            // Number of posts in a given forum.
+            Map<Long, Integer> counts = new HashMap<>();
+
+            // Identify all the forums joined after the given date by
+            // friends of the start person.  Reset the counts of all
+            // these forums to zero.
+            s = db.prepareStatement(subordinateQueryString);
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            s.setLong(3, personId);
+            s.setLong(4, date);
+            r = s.executeQuery();
+            while (r.next())
+                counts.put(r.getLong("ForumHasMemberPerson.forumId"), 0);
+            r.close();
+            s.close();
+
+            // The main query returns all the posts in the forums
+            // identified in the previous loop created by friends of
+            // the start person.  Count those posts.
+            s = db.prepareStatement(queryString);
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            s.setLong(3, personId);
+            s.setLong(4, date);
+            r = s.executeQuery();
+            while (r.next()) {
+                long forumId = r.getLong("ForumHasMemberPerson.forumId");
+                // ignore r.getLong("ForumContainerOfPost.postId")
+                counts.put(forumId, counts.get(forumId) + 1);
+            }
+            r.close();
+            s.close();
+
+            // Iterate over all counts, add them to the priority
+            // queue, and eliminate overflow entries.
+            //
+            // To do so, create a priority queue to keep the results
+            // sorted and limited to at most the requested 'limit'
+            // entries.  To make this work, we inverse the sort order
+            // so we know it is safe to remove the entry with the
+            // "highest" priority when the queue reaches 'limit + 1'
+            // elements.
+            Queue<Query5SortResult> queue = new PriorityQueue<>(limit + 1);
+            for (Map.Entry<Long, Integer> entry : counts.entrySet()) {
+                Query5SortResult e = new Query5SortResult(
+                    entry.getKey(),
+                    entry.getValue());
+
+                queue.add(e);
+
+                // Eliminate the 'highest' priority entry if we have
+                // reached the target number of results.
+                Query5SortResult ignore;
+                if (queue.size() > limit)
+                    ignore = queue.poll();
+            }
+
+            // Add elements to the final result array in reverse order.
+            while (queue.size() != 0) {
+                Query5SortResult e = queue.poll(); // Dequeue.
+                LdbcQuery5Result result = new LdbcQuery5Result(
+                    LdbcUtils.getForumTitle(db, e.forumId()),
+                    e.count());
+                results.add(0, result); // Add at the front.
+            }
+
+            db.commit();
+        } finally {
+            db.setAutoCommit(true);
         }
-        r.close();
-        s.close();
 
         return results;
     }
@@ -145,11 +211,9 @@ public class Query5 implements ExecutableQuery {
     private static ResultSet explain(Connection db, long personId, long date, int limit) throws SQLException {
         PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
-        s.setLong(2, date);
+        s.setLong(2, personId);
         s.setLong(3, personId);
-        s.setLong(4, personId);
-        s.setLong(5, date);
-        s.setInt(6, queryLimit);
+        s.setLong(4, date);
         return s.executeQuery();
     }
 

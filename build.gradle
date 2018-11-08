@@ -16,6 +16,12 @@ dependencies {
     compile "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
 }
 
+task validate(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.ldbc.driver.Client'
+    args = [ '-P', 'validation.properties']
+}
+
 task load(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'ldbc.loader.BulkLoader'
