@@ -16,6 +16,12 @@ dependencies {
     compile "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
 }
 
+task ldbc(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.ldbc.driver.Client'
+    args = [ '-P', 'ldbc.properties', '-P', 'updateStream.properties' ]
+}
+
 task validate(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.ldbc.driver.Client'
