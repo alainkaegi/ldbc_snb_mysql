@@ -254,7 +254,7 @@ as described in the 'Configure the LDBC Driver' section.  Also set
 'validate_database' to
 `../ldbc_snb_interactive_validation/neo4j/e/validation_params.csv`,
 and 'ldbc.snb.interactive.parameters_dir' to
-'../ldbc_snb_interactive_validation/neo4j/e/substitution_parameters/'.
+`../ldbc_snb_interactive_validation/neo4j/e/substitution_parameters/`.
 
 Now you are ready to run validation:
 
