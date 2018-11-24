@@ -67,7 +67,7 @@ Requirements
 Instructions
 ============
 
-I tested these instructions on Ubuntu running Xenial Xerus (16.04).
+I tested these instructions on Ubuntu running Bionic Beaver (18.04).
 
 These instructions assume that you cloned the various source packages
 mentioned here (data generator [3], benchmark driver [4], benchmark
