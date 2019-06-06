@@ -67,7 +67,7 @@ Requirements
 Instructions
 ============
 
-I tested these instructions on Ubuntu running Xenial Xerus (16.04).
+I tested these instructions on Ubuntu running Bionic Beaver (18.04).
 
 These instructions assume that you cloned the various source packages
 mentioned here (data generator [3], benchmark driver [4], benchmark
@@ -254,7 +254,7 @@ as described in the 'Configure the LDBC Driver' section.  Also set
 'validate_database' to
 `../ldbc_snb_interactive_validation/neo4j/e/validation_params.csv`,
 and 'ldbc.snb.interactive.parameters_dir' to
-'../ldbc_snb_interactive_validation/neo4j/e/substitution_parameters/'.
+`../ldbc_snb_interactive_validation/neo4j/e/substitution_parameters/`.
 
 Now you are ready to run validation:
 
