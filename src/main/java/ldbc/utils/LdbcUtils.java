@@ -175,13 +175,24 @@ public class LdbcUtils {
      * @param country  The country's name
      * @return the identifier of the given country or -1 if not found
      * @throws SQLException if a database access error occurs
+     * Some towns have the same name as a country.  LEFT JOIN Place
+     * twice with PlaceIsPartOfPlace.  Only countries will have the
+     * first version PlaceIsPartOfPlace's fields set to non-NULL
+     * values and the second version PlaceIsPartOfPlace's fields set
+     * to NULL.
      */
     static public long getCountryId(Connection db, String country) throws SQLException {
         long countryId = -1;
         String countryQuery =
-            "  SELECT Place.id " +
-            "    FROM Place " +
-            "   WHERE Place.name = \"" + country + "\"";
+            "   SELECT Place.id " +
+            "     FROM Place " +
+            "LEFT JOIN PlaceIsPartOfPlace AS P " +
+            "       ON Place.id = P.place1Id " +
+            "LEFT JOIN PlaceIsPartOfPlace AS R " +
+            "       ON P.place2Id = R.place1Id " +
+            "    WHERE Place.name = \"" + country + "\"" +
+            "      AND P.place1Id IS NOT NULL" +
+            "      AND R.place1Id IS NULL";
         Statement s = db.createStatement();
         ResultSet r = s.executeQuery(countryQuery);
         if (r.next())
