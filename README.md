@@ -265,6 +265,19 @@ gradle validate
 Important: you must reload the validation database from scratch every
 time you run validation
 
+MemSQL
+======
+
+MemSQL does not support certain MySQL features.  I created a branch
+(called 'memsql') where I rewrote the only two queries using such
+features.  This rewrite breaks up single queries into multiple
+subqueries in try blocks.  For this reason I have chosen to place the
+rewrite in a separate branch for now.
+
+With the rewrite, LDBC Social Network Benchmark passes validation with
+MemSQL running in a "cluster-in-a-box" configuration in a docker
+container.
+
 Known Issues
 ============
 
