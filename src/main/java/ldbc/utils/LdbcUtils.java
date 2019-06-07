@@ -419,7 +419,8 @@ public class LdbcUtils {
         String emailQuery =
             "  SELECT PersonEmailEmailAddress.email " +
             "    FROM PersonEmailEmailAddress " +
-            "   WHERE PersonEmailEmailAddress.personId = " + personId;
+            "   WHERE PersonEmailEmailAddress.personId = " + personId + " " +
+            "ORDER BY PersonEmailEmailAddress.email";
         Statement s = db.createStatement();
         ResultSet r = s.executeQuery(emailQuery);
         while (r.next())
