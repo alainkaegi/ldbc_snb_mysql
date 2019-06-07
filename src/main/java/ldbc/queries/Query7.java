@@ -49,12 +49,7 @@ public class Query7 implements ExecutableQuery {
         "          U.messageId, " +
         "          Message.content, " +
         "          Message.imageFile, " +
-        "          TRUNCATE((U.creationDate - Message.creationDate)/60000,0) AS latency, " +
-        "          (   SELECT COUNT(*) " +
-        "                FROM PersonKnowsPerson " +
-        "               WHERE PersonKnowsPerson.person1Id = ? " +
-        "                 AND PersonKnowsPerson.person2Id = personId " +
-        "          ) AS isFriendOfStartPerson " +  // isFriendOfStartPerson > 0 => friends
+        "          TRUNCATE((U.creationDate - Message.creationDate)/60000,0) AS latency " +
         "     FROM (   SELECT MessageHasCreatorPerson.messageId, " +
         "                     PersonLikesPost.personId, " +
         "                     PersonLikesPost.creationDate " +
@@ -80,8 +75,7 @@ public class Query7 implements ExecutableQuery {
         "          Person.lastName, " +
         "          U.messageId, " +
         "          Message.content, " +
-        "          latency, " +
-        "          isFriendOfStartPerson " +
+        "          latency " +
         " ORDER BY date DESC";
 
     /** A minimal constructor. */
@@ -111,39 +105,67 @@ public class Query7 implements ExecutableQuery {
 
         List<LdbcQuery7Result> results = new ArrayList<>();
 
+        String knowsQuery =
+            "   SELECT PersonKnowsPerson.person2id " +
+            "     FROM PersonKnowsPerson " +
+            "    WHERE PersonKnowsPerson.person1Id = ?";
+
         Set<Long> likers = new HashSet<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, personId);
-        s.setLong(3, personId);
-        ResultSet r = s.executeQuery();
-        while (r.next() && results.size() < limit) {
-            long likerId = r.getLong("personId");
+        PreparedStatement s1 = null;
+        PreparedStatement s = null;
+        ResultSet r1 = null;
+        ResultSet r = null;
 
-            // Skip a liker we have already seen (I do not know how to
-            // fold this functionality directly in the SQL query).
-            if (likers.contains(likerId))
-                continue;
+        try {
+            db.setAutoCommit(false);
 
-            likers.add(likerId);
+            // The friends of the start person.
+            Set<Long> friends = new HashSet<>();
+            s1 = db.prepareStatement(knowsQuery);
+            s1.setLong(1, personId);
+            r1 = s1.executeQuery();
+            while (r1.next()) {
+                friends.add(r1.getLong("PersonKnowsPerson.person2id"));
+            }
 
-            LdbcQuery7Result result = new LdbcQuery7Result(
-                likerId,
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getLong("date"),
-                r.getLong("U.messageId"),
+            s = db.prepareStatement(queryString);
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            r = s.executeQuery();
+            while (r.next() && results.size() < limit) {
+                long likerId = r.getLong("personId");
 
-                // One or the other field must be empty.
-                r.getString("Message.content") + r.getString("Message.imageFile"),
+                // Skip a liker we have already seen (I do not know how to
+                // fold this functionality directly in the SQL query).
+                if (likers.contains(likerId))
+                    continue;
 
-                r.getInt("latency"),
-                r.getInt("isFriendOfStartPerson") == 0);
-            results.add(result);
+                likers.add(likerId);
+
+                LdbcQuery7Result result = new LdbcQuery7Result(
+                    likerId,
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getLong("date"),
+                    r.getLong("U.messageId"),
+
+                    // One or the other field must be empty.
+                    r.getString("Message.content") + r.getString("Message.imageFile"),
+
+                    r.getInt("latency"),
+                    !friends.contains(likerId));
+                results.add(result);
+            }
+
+            db.commit();
+        } finally {
+            db.setAutoCommit(true);
+            if (r1 != null) { r1.close(); }
+            if (s1 != null) { s1.close(); }
+            if (r != null) { r.close(); }
+            if (s != null) { s.close(); }
         }
-        r.close();
-        s.close();
 
         return results;
     }
