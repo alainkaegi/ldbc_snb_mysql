@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    compile 'mysql:mysql-connector-java:5.1.16'
-    compile "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
+    implementation 'mysql:mysql-connector-java:5.1.16'
+    implementation "com.ldbc.driver:jeeves:${ldbcDriverVersion}"
 }
 
 task ldbc(type: JavaExec) {
