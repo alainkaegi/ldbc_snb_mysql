@@ -19,16 +19,6 @@ public class Db {
     // Suppress the default constructor.
     private Db() {}
 
-    // Load the MySQL JDBC driver early.
-    static {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-        }
-        catch (ClassNotFoundException e) {
-            // Never expect this class loading to fail.
-        }
-    }
-
     /**
      * Connect to the database found at the given URL with the given
      * user and password.
