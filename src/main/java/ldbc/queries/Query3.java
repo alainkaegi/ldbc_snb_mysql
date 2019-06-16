@@ -127,7 +127,6 @@ public class Query3 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery3Result> query(Connection db, long personId, String countryX, String countryY, long startDate, int duration, int limit) throws SQLException {
-
         // Create a priority queue to keep the results sorted and
         // limited to at most the requested 'limit' entries.  To make
         // this work, we inverse the sort order so we know it is safe

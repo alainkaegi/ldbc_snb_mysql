@@ -61,7 +61,6 @@ public class Query14 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery14Result> query(Connection db, long person1Id, long person2Id) throws SQLException {
-
         List<LdbcQuery14Result> results = new ArrayList<>();
 
         try {
@@ -193,9 +192,7 @@ public class Query14 implements ExecutableQuery {
 
         bfs:
         while (!open.isEmpty()) {
-
             for (long personId : open) {
-
                 PreparedStatement s = db.prepareStatement(friendQuery);
                 s.setLong(1, personId);
                 ResultSet r = s.executeQuery();
@@ -240,7 +237,6 @@ public class Query14 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     private static List<Stack<Long>> findAllShortestPaths(Connection db, long person1Id, long person2Id, int length) throws SQLException {
-
         // A candidate shortest path.
         Stack<Long> path = new Stack<>();
         // List of shortest paths found so far.

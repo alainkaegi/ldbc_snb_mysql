@@ -34,14 +34,12 @@ public class Microbenchmark {
     public static void executeQueryWithParametersFromFile(ExecutableQuery query, String queryName, String queryParameterFilename, String queryParameterFileLinePattern) {
 
         try {
-
             Configuration config = new Configuration();
 
             String url = "jdbc:mysql://localhost/" + config.database();
             String parameterFQN = config.parameterFilesDirectory() + "/" + queryParameterFilename;
 
             try {
-
                 Connection db = Db.connect(url, config.user(), config.password());
                 if (config.explain())
                     doExplainQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern);

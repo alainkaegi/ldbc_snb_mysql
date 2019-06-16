@@ -53,7 +53,6 @@ public class Query13 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static LdbcQuery13Result query(Connection db, long person1Id, long person2Id) throws SQLException {
-
         int pathLength = -1;
 
         // Breadth-first search:
@@ -81,9 +80,7 @@ public class Query13 implements ExecutableQuery {
 
             bfs:
             while (!open.isEmpty()) {
-
                 for (Long person : open) {
-
                     PreparedStatement s = db.prepareStatement(friendQuery);
                     s.setLong(1, person);
                     ResultSet r = s.executeQuery();

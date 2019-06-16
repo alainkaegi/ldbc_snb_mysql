@@ -80,7 +80,6 @@ public class Query12 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery12Result> query(Connection db, long personId, String tagClassName, int limit) throws SQLException {
-
         List<LdbcQuery12Result> results = new ArrayList<>();
 
         // Create a priority queue to keep the results sorted and

@@ -96,7 +96,6 @@ public class Query11 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery11Result> query(Connection db, long personId, String country, int year, int limit) throws SQLException {
-
         List<LdbcQuery11Result> results = new ArrayList<>();
 
         PreparedStatement s = db.prepareStatement(queryString);

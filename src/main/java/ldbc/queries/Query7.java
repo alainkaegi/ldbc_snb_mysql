@@ -108,7 +108,6 @@ public class Query7 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery7Result> query(Connection db, long personId, int limit) throws SQLException {
-
         List<LdbcQuery7Result> results = new ArrayList<>();
 
         Set<Long> likers = new HashSet<>();
