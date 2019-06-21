@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery11Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -87,7 +89,7 @@ public class Query11 implements ExecutableQuery {
 
     /**
      * Job referral (11th complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param country   A country's name
      * @param year      A year
@@ -95,24 +97,32 @@ public class Query11 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person who started at some company in the given country before the given year
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery11Result> query(Connection db, long personId, String country, int year, int limit) throws SQLException {
+    public static List<LdbcQuery11Result> query(HikariDataSource ds, long personId, String country, int year, int limit) throws SQLException {
         List<LdbcQuery11Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, personId);
-        s.setInt(3, year);
-        s.setString(4, country);
-        s.setInt(5, limit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery11Result result = new LdbcQuery11Result(
-                r.getLong("Friend.id"),
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getString("Organisation.name"),
-                r.getInt("PersonWorkAtOrganisation.workFrom"));
+        ResultSet r = null;
+
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            s.setInt(3, year);
+            s.setString(4, country);
+            s.setInt(5, limit);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcQuery11Result result = new LdbcQuery11Result(
+                    r.getLong("Friend.id"),
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getString("Organisation.name"),
+                    r.getInt("PersonWorkAtOrganisation.workFrom"));
                 results.add(result);
+            }
+            c.commit();
+        }
+        finally {
+            if (r != null) r.close();
         }
 
         return results;
@@ -128,8 +138,9 @@ public class Query11 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person with the given first name
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, String country, int year, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, String country, int year, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setInt(3, year);
@@ -146,7 +157,7 @@ public class Query11 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -170,7 +181,7 @@ public class Query11 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             String country = queryParameters.getString();

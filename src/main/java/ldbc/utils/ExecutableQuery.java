@@ -4,7 +4,8 @@
 
 package ldbc.queries;
 
-import java.sql.Connection;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.SQLException;
 
 /**
@@ -13,7 +14,7 @@ import java.sql.SQLException;
  */
 interface ExecutableQuery {
 
-    void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException;
-    void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException;
+    void executeQuery(HikariDataSource ds, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException;
+    void explainQuery(HikariDataSource ds, QueryParameterFile queryParameters) throws SQLException;
 
 }

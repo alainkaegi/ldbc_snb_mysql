@@ -5,12 +5,11 @@
 package ldbc.glue;
 
 import com.ldbc.driver.DbConnectionState;
-import com.ldbc.driver.DbException;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.IOException;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 
 import ldbc.utils.Db;
 
@@ -20,18 +19,19 @@ import ldbc.utils.Db;
  */
 public class MySQLDbConnectionState extends DbConnectionState {
 
-    private Connection client;
+    private HikariDataSource client;
 
-    public MySQLDbConnectionState(String url, String user, String password) throws DbException {
-        try {
-            client = Db.connect(url, user, password);
-        }
-        catch (SQLException e) {
-            throw new DbException(e.getMessage());
-        }
+    public MySQLDbConnectionState(String url, String user, String password) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(password);
+        config.setAutoCommit(false);
+
+        client = new HikariDataSource(config);
     }
 
-    public Connection getClient() {
+    public HikariDataSource getClient() {
         return client;
     }
 

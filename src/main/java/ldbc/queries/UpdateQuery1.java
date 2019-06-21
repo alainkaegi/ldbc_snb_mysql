@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate1AddPerson;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -17,100 +19,98 @@ public class UpdateQuery1 {
 
     /**
      * Add a person.
-     * @param db          A database handle
+     * @param ds          A data source
      * @param parameters  A person's full description
      * @throws SQLException if a database access error occurs
      */
-    public static void query(Connection db, LdbcUpdate1AddPerson parameters) throws SQLException {
+    public static void query(HikariDataSource ds, LdbcUpdate1AddPerson parameters) throws SQLException {
 
-        try {
-            db.setAutoCommit(false);
+        String addPersonQuery =
+            "   INSERT INTO Person " +
+            "        VALUES (?, " + // id
+            "                ?, " + // firstName
+            "                ?, " + // lastName
+            "                ?, " + // gender
+            "                ?, " + // birthday
+            "                ?, " + // creationDate
+            "                ?, " + // locationIP
+            "                ?)";   // browserUsed
 
-            PreparedStatement s;
+        String addLanguageLinkQuery =
+            "   INSERT INTO PersonSpeaksLanguage " +
+            "        VALUES (?, " + // personId
+            "                ?)";   // language
 
-            String addPersonQuery =
-                "   INSERT INTO Person " +
-                "        VALUES (?, " + // id
-                "                ?, " + // firstName
-                "                ?, " + // lastName
-                "                ?, " + // gender
-                "                ?, " + // birthday
-                "                ?, " + // creationDate
-                "                ?, " + // locationIP
-                "                ?)";   // browserUsed
-            s = db.prepareStatement(addPersonQuery);
-            s.setLong(1, parameters.personId());
-            s.setString(2, parameters.personFirstName());
-            s.setString(3, parameters.personLastName());
-            s.setString(4, parameters.gender());
-            s.setLong(5, parameters.birthday().getTime());
-            s.setLong(6, parameters.creationDate().getTime());
-            s.setString(7, parameters.locationIp());
-            s.setString(8, parameters.browserUsed());
-            s.executeUpdate();
+        String addEmailLinkQuery =
+            "   INSERT INTO PersonEmailEmailAddress " +
+            "        VALUES (?, " + // personId
+            "                ?)";   // email
 
-            String addLanguageLinkQuery =
-                "   INSERT INTO PersonSpeaksLanguage " +
-                "        VALUES (?, " + // personId
-                "                ?)";   // language
-            s = db.prepareStatement(addLanguageLinkQuery);
-            s.setLong(1, parameters.personId());
+        String addCityLinkQuery =
+            "   INSERT INTO PersonIsLocatedInPlace " +
+            "        VALUES (?, " + // personId
+            "                ?)";   // cityId
+
+        String addStudyLinkQuery =
+            "   INSERT INTO PersonStudyAtOrganisation " +
+            "        VALUES (?, " + // personId
+            "                ?, " + // organizationId
+            "                ?)";   // classYear
+
+        String addWorkLinkQuery =
+            "   INSERT INTO PersonWorkAtOrganisation " +
+            "        VALUES (?, " + // personId
+            "                ?, " + // organizationId
+            "                ?)"; // workFrom
+
+        try (Connection c = ds.getConnection();
+             PreparedStatement addPersonStatement = c.prepareStatement(addPersonQuery);
+             PreparedStatement addLanguageLinkStatement = c.prepareStatement(addLanguageLinkQuery);
+             PreparedStatement addEmailLinkStatement = c.prepareStatement(addEmailLinkQuery);
+             PreparedStatement addCityLinkStatement = c.prepareStatement(addCityLinkQuery);
+             PreparedStatement addStudyLinkStatement = c.prepareStatement(addStudyLinkQuery);
+             PreparedStatement addWorkLinkStatement = c.prepareStatement(addWorkLinkQuery)) {
+            addPersonStatement.setLong(1, parameters.personId());
+            addPersonStatement.setString(2, parameters.personFirstName());
+            addPersonStatement.setString(3, parameters.personLastName());
+            addPersonStatement.setString(4, parameters.gender());
+            addPersonStatement.setLong(5, parameters.birthday().getTime());
+            addPersonStatement.setLong(6, parameters.creationDate().getTime());
+            addPersonStatement.setString(7, parameters.locationIp());
+            addPersonStatement.setString(8, parameters.browserUsed());
+            addPersonStatement.executeUpdate();
+
+            addLanguageLinkStatement.setLong(1, parameters.personId());
             for (String language : parameters.languages()) {
-                s.setString(2, language);
-                s.executeUpdate();
+                addLanguageLinkStatement.setString(2, language);
+                addLanguageLinkStatement.executeUpdate();
             }
 
-            String addEmailLinkQuery =
-                "   INSERT INTO PersonEmailEmailAddress " +
-                "        VALUES (?, " + // personId
-                "                ?)";   // email
-            s = db.prepareStatement(addEmailLinkQuery);
-            s.setLong(1, parameters.personId());
+            addEmailLinkStatement.setLong(1, parameters.personId());
             for (String email : parameters.emails()) {
-                s.setString(2, email);
-                s.executeUpdate();
+                addEmailLinkStatement.setString(2, email);
+                addEmailLinkStatement.executeUpdate();
             }
 
-            String addCityLinkQuery =
-                "   INSERT INTO PersonIsLocatedInPlace " +
-                "        VALUES (?, " + // personId
-                "                ?)";   // cityId
-            s = db.prepareStatement(addCityLinkQuery);
-            s.setLong(1, parameters.personId());
-            s.setLong(2, parameters.cityId());
-            s.executeUpdate();
+            addCityLinkStatement.setLong(1, parameters.personId());
+            addCityLinkStatement.setLong(2, parameters.cityId());
+            addCityLinkStatement.executeUpdate();
 
-            String addStudyLinkQuery =
-                "   INSERT INTO PersonStudyAtOrganisation " +
-                "        VALUES (?, " + // personId
-                "                ?, " + // organizationId
-                "                ?)";   // classYear
-            s = db.prepareStatement(addStudyLinkQuery);
-            s.setLong(1, parameters.personId());
+            addStudyLinkStatement.setLong(1, parameters.personId());
             for (LdbcUpdate1AddPerson.Organization school : parameters.studyAt()) {
-                s.setLong(2, school.organizationId());
-                s.setInt(3, school.year());
-                s.executeUpdate();
+                addStudyLinkStatement.setLong(2, school.organizationId());
+                addStudyLinkStatement.setInt(3, school.year());
+                addStudyLinkStatement.executeUpdate();
             }
 
-            String addWorkLinkQuery =
-                "   INSERT INTO PersonWorkAtOrganisation " +
-                "        VALUES (?, " + // personId
-                "                ?, " + // organizationId
-                "                ?)"; // workFrom
-            s = db.prepareStatement(addWorkLinkQuery);
-            s.setLong(1, parameters.personId());
+            addWorkLinkStatement.setLong(1, parameters.personId());
             for (LdbcUpdate1AddPerson.Organization company : parameters.workAt()) {
-                s.setLong(2 , company.organizationId());
-                s.setInt(3, company.year());
-                s.executeUpdate();
+                addWorkLinkStatement.setLong(2 , company.organizationId());
+                addWorkLinkStatement.setInt(3, company.year());
+                addWorkLinkStatement.executeUpdate();
             }
 
-            s.close();
-
-            db.commit();
-        } finally {
-            db.setAutoCommit(true);
+            c.commit();
         }
     }
 

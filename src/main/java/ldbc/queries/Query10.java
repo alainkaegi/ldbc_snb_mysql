@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery10Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -99,19 +101,20 @@ public class Query10 implements ExecutableQuery {
 
     /**
      * Friend recommendation (tenth complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param month     A month (between 1 and 12 inclusive)
      * @param limit     An upper bound on the number of results returned
      * @return the top 'limit' most similar friends of the given person; consider only friends born near the given month
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery10Result> query(Connection db, long personId, int month, int limit) throws SQLException {
+    public static List<LdbcQuery10Result> query(HikariDataSource ds, long personId, int month, int limit) throws SQLException {
         List<LdbcQuery10Result> results = new ArrayList<>();
 
-        try {
-            db.setAutoCommit(false);
+        ResultSet r = null;
 
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
             // Create a priority queue to keep the results sorted and
             // limited to at most the requested 'limit' entries.  To
             // make this work, we inverse the sort order so we know it
@@ -119,7 +122,7 @@ public class Query10 implements ExecutableQuery {
             // when the queue reaches 'limit + 1' elements.
             Queue<Query10SortResult> queue = new PriorityQueue<>(limit + 1);
 
-            Set<Long> startPersonInterests = LdbcUtils.getTags(db, personId);
+            Set<Long> startPersonInterests = LdbcUtils.getTags(c, personId);
 
             // The SQL query returns friend, post, and tag identifiers
             // triples.  The triples are grouped by friends and then
@@ -145,13 +148,12 @@ public class Query10 implements ExecutableQuery {
             int common = 0;
             int uncommon = 0;
 
-            PreparedStatement s = db.prepareStatement(queryString);
             s.setLong(1, personId);
             s.setLong(2, personId);
             s.setLong(3, personId);
             s.setInt(4, month);
             s.setInt(5, month);
-            ResultSet r = s.executeQuery();
+            r = s.executeQuery();
             while (r.next()) {
                 long friendId = r.getLong("FriendAndPost.friendId");
                 long postId = r.getLong("FriendAndPost.postId");
@@ -199,26 +201,23 @@ public class Query10 implements ExecutableQuery {
                 add(queue, limit, prevFriendId, common -  uncommon);
             }
 
-            r.close();
-            s.close();
-
             // Add elements to the final result array in reverse order.
             while (queue.size() != 0) {
                 Query10SortResult e = queue.poll(); // Dequeue.
                 long friendId = e.friendId();
                 LdbcQuery10Result result = new LdbcQuery10Result(
                     friendId,
-                    LdbcUtils.getFirstName(db, friendId),
-                    LdbcUtils.getLastName(db, friendId),
+                    LdbcUtils.getFirstName(c, friendId),
+                    LdbcUtils.getLastName(c, friendId),
                     e.commonInterestScore(),
-                    LdbcUtils.getGender(db, friendId),
-                    LdbcUtils.findPlace(db, friendId));
+                    LdbcUtils.getGender(c, friendId),
+                    LdbcUtils.findPlace(c, friendId));
                 results.add(0, result); // Add at the front.
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
+            if (r != null) r.close();
         }
 
         return results;
@@ -250,8 +249,9 @@ public class Query10 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person with the given first name
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, int month, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, int month, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setLong(3, personId);
@@ -268,7 +268,7 @@ public class Query10 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -291,7 +291,7 @@ public class Query10 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             int month = queryParameters.getInt();

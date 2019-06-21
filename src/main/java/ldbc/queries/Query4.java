@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery4Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -77,7 +79,7 @@ public class Query4 implements ExecutableQuery {
 
     /**
      * New topics (fourth complex read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param personId   The person's unique identifier
      * @param startDate  A date (milliseconds since the start of the epoch)
      * @param duration   A duration in days
@@ -85,26 +87,32 @@ public class Query4 implements ExecutableQuery {
      * @return the top 'limit' topics associated with posts created by the given person's friends in the time range provided
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery4Result> query(Connection db, long personId, long startDate, int duration, int limit) throws SQLException {
+    public static List<LdbcQuery4Result> query(HikariDataSource ds, long personId, long startDate, int duration, int limit) throws SQLException {
         List<LdbcQuery4Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, startDate);
-        s.setLong(3, startDate);
-        s.setLong(4, duration);
-        s.setLong(5, personId);
-        s.setLong(6, startDate);
-        s.setInt(7, limit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery4Result result = new LdbcQuery4Result(
-                r.getString("Tag.name"),
-                r.getInt("COUNT(*)"));
-            results.add(result);
+        ResultSet r = null;
+
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setLong(2, startDate);
+            s.setLong(3, startDate);
+            s.setLong(4, duration);
+            s.setLong(5, personId);
+            s.setLong(6, startDate);
+            s.setInt(7, limit);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcQuery4Result result = new LdbcQuery4Result(
+                    r.getString("Tag.name"),
+                    r.getInt("COUNT(*)"));
+                results.add(result);
+            }
+            c.commit();
         }
-        r.close();
-        s.close();
+        finally {
+            if (r != null) r.close();
+        }
 
         return results;
     }
@@ -119,8 +127,9 @@ public class Query4 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, long startDate, int duration, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, long startDate, int duration, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, startDate);
         s.setLong(3, startDate);
@@ -139,7 +148,7 @@ public class Query4 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -163,7 +172,7 @@ public class Query4 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long startDate = queryParameters.getLong();

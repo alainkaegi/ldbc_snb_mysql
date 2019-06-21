@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery13Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,13 +48,13 @@ public class Query13 implements ExecutableQuery {
 
     /**
      * Single shortest path (13th complex read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param person1Id  The start person unique identifier
      * @param person2Id  The end person unique identifier
      * @return the length of single shortest path between the given persons based on the Knows relationship, -1 if no such path exists
      * @throws SQLException if a database access error occurs
      */
-    public static LdbcQuery13Result query(Connection db, long person1Id, long person2Id) throws SQLException {
+    public static LdbcQuery13Result query(HikariDataSource ds, long person1Id, long person2Id) throws SQLException {
         int pathLength = -1;
 
         // Breadth-first search:
@@ -72,18 +74,18 @@ public class Query13 implements ExecutableQuery {
             "     FROM PersonKnowsPerson " +
             "    WHERE PersonKnowsPerson.person1Id = ?";
 
+        ResultSet r = null;
+
         // Traverse the graph induced by the Knows relationship
         // breadth first search until we find the destination node or
         // there are no more node to visit.
-        try {
-            db.setAutoCommit(false);
-
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(friendQuery)) {
             bfs:
             while (!open.isEmpty()) {
                 for (Long person : open) {
-                    PreparedStatement s = db.prepareStatement(friendQuery);
                     s.setLong(1, person);
-                    ResultSet r = s.executeQuery();
+                    r = s.executeQuery();
                     while (r.next()) {
                         long friendId = r.getLong("PersonKnowsPerson.person2Id");
 
@@ -98,18 +100,15 @@ public class Query13 implements ExecutableQuery {
                             break bfs;
                         }
                     }
-
-                    r.close();
-                    s.close();
                 }
 
                 ++distance;
                 open = nextOpen;
                 nextOpen = new LinkedList<>();
             }
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
+            if (r != null) r.close();
         }
 
         return new LdbcQuery13Result(pathLength);
@@ -123,7 +122,7 @@ public class Query13 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -146,7 +145,7 @@ public class Query13 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         System.out.println("Explain is not supported for this query at this time.");
     }
 
