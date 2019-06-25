@@ -4,11 +4,11 @@
 
 package ldbc.queries;
 
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.SQLException;
 
+import ldbc.glue.MySQLDbConnectionState;
 import ldbc.utils.Db;
 import ldbc.utils.Configuration;
 
@@ -41,13 +41,9 @@ public class Microbenchmark {
             String url = "jdbc:mysql://" + config.host() + ":" + config.port() + "/" + config.database();
             String parameterFQN = config.parameterFilesDirectory() + "/" + queryParameterFilename;
 
-            HikariConfig dataSourceConfig = new HikariConfig();
-            dataSourceConfig.setJdbcUrl(url);
-            dataSourceConfig.setUsername(config.user());
-            dataSourceConfig.setPassword(config.password());
-            dataSourceConfig.setAutoCommit(false);
+            MySQLDbConnectionState state = new MySQLDbConnectionState(url, config.user(), config.password());
 
-            HikariDataSource ds = new HikariDataSource(dataSourceConfig);
+            HikariDataSource ds = state.getClient();
 
             try {
                 if (config.explain())
