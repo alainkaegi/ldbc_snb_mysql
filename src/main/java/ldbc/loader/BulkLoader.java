@@ -114,7 +114,7 @@ public class BulkLoader {
     }
 
     private static void createTable(Connection db, String database, String name, String structure) throws SQLException {
-	if (structure.length() == 0)
+        if (structure.length() == 0)
             return;
         Statement stmt = db.createStatement();
         stmt.executeUpdate("CREATE TABLE " + database + "."+ name + "(" + structure + ")");
