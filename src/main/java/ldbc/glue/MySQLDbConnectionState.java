@@ -27,6 +27,17 @@ public class MySQLDbConnectionState extends DbConnectionState {
         config.setUsername(user);
         config.setPassword(password);
         config.setAutoCommit(false);
+        config.addDataSourceProperty("cachePrepStmts", true);
+        config.addDataSourceProperty("prepStmts", true);
+        config.addDataSourceProperty("prepStmtCacheSize", 250);
+        config.addDataSourceProperty("dataSource.prepStmtCacheSqlLimit", 2048);
+        config.addDataSourceProperty("dataSource.useServerPrepStmts", true);
+        config.addDataSourceProperty("dataSource.useLocalSessionState", true);
+        config.addDataSourceProperty("dataSource.rewriteBatchedStatements", true);
+        config.addDataSourceProperty("dataSource.cacheResultSetMetadata", true);
+        config.addDataSourceProperty("dataSource.cacheServerConfiguration", true);
+        config.addDataSourceProperty("dataSource.elideSetAutoCommits", true);
+        config.addDataSourceProperty("dataSource.maintainTimeStats", false);
 
         client = new HikariDataSource(config);
     }
