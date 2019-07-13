@@ -30,7 +30,7 @@ public class Query4 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query4";
-    private static final String queryParameterFilename = "query_4_param.txt";
+    private static final String queryParameterFilename = "interactive_4_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)\\|(\\d+)";
     private static final int queryLimit = 10;
     private static final String queryString =

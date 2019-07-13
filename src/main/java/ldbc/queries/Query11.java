@@ -28,7 +28,7 @@ public class Query11 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query11";
-    private static final String queryParameterFilename = "query_11_param.txt";
+    private static final String queryParameterFilename = "interactive_11_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(.+)\\|(\\d+)";
     private static final int queryLimit = 10;
     // Friends and their jobs.

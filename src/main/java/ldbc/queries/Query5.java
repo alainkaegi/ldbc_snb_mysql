@@ -36,7 +36,7 @@ public class Query5 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query5";
-    private static final String queryParameterFilename = "query_5_param.txt";
+    private static final String queryParameterFilename = "interactive_5_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
     private static final int queryLimit = 20;
     // Messages created by friends and friends of friends who joined

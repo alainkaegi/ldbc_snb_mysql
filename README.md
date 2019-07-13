@@ -118,25 +118,12 @@ The LDBC validation project [5] comes with its own pre-generated
 dataset.  For all other cases, you must first generate some data.
 
 Generate a dataset using the LDBC SNB data generator [3] with the
-scale factor of your choice, the `PARAM_GENERATION` environment
-variable set to 1, and most other parameters left to their default
-values.  In the end the goal is to have
-`../ldbc_snb_datagen/social_network/` holding the CSV files to seed
-the MySQL database and `../ldbc_snb_datagen/substitution_parameters/`
-containing files used as input to the complex queries run in
-standalone mode or to the LDBC benchmark.  You may have to issue a
-command like `bin/hdfs dfs -get social_network/
-../ldbc_snb_datagen/social_network/` to retrieve your data.
-
-Prepare the Dataset
--------------------
-
-The dataset may come with entities split across multiple files (either
-a dataset you have generated or that has been supplied).  Use the
-concatenation script distributed with my Neo4j-based LDBC SNB
-implementation [2] to merge the results (e.g.,
-`../ldbc_snb_neo4j/scripts/cat.sh ../ldbc_snb_datagen/social_network/
-../ldbc_snb_datagen/social_network_merged/`).
+scale factor of your choice and parameter
+`ldbc.snb.datagen.serializer.updateStreams` set to true.  In the end
+the goal is to have `../ldbc_snb_datagen/social_network/` holding the
+CSV files to seed the MySQL database and
+`../ldbc_snb_datagen/substitution_parameters/` containing files used
+as input to the complex queries run in standalone mode.
 
 Edit params.ini
 ---------------
@@ -238,13 +225,10 @@ Untar the content of
 `ldbc_snb_interactive_validation/neo4j/neo4j--validation_set.tar.gz` in,
 say, `../ldbc_snb_interactive_validation/neo4j/e/`.
 
-Prepare and load the dataset as described in the 'Prepare the Dataset'
-and 'Load the Dataset' sections using the CSV files in the
-`string_date` subdirectory (`../ldbc_snb_neo4j/scripts/cat.sh
-../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date/
-../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date_merged/`
-and set the 'datasetDirectory' parameter in `params.ini` to
-`../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date_merged`).
+Prepare and load the dataset as described in 'Load the Dataset'
+section using the CSV files in the `string_date` subdirectory (set the
+'datasetDirectory' parameter in `params.ini` to
+`../ldbc_snb_interactive_validation/neo4j/e/social_network/string_date`).
 
 Copy the property file provided with that validation project and name
 it validation.properties (e.g., `cp
@@ -300,8 +284,8 @@ References
     retrieved October 11, 2016.
 
 [3] LDBC SNB Data Generator.
-    https://github.com/ldbc/ldbc_snb_datagen, last retrieved March
-    18th, 2016, with, then, latest commit 2645cc0.
+    https://github.com/ldbc/ldbc_snb_datagen, last retrieved July
+    12th, 2018, with, then, latest commit 4f296a6.
 
 [4] LDBC SNB Benchmark Driver.  https://github.com/ldbc/ldbc_driver,
     last retrieved March 30th, 2016, version 0.2, commit 55f7ac0.

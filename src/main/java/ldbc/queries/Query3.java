@@ -37,7 +37,7 @@ public class Query3 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query3";
-    private static final String queryParameterFilename = "query_3_param.txt";
+    private static final String queryParameterFilename = "interactive_3_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)\\|(\\d+)\\|(.+)\\|(.+)";
     private static final int queryLimit = 20;
     // Friends that have been in both the given countries in the given
