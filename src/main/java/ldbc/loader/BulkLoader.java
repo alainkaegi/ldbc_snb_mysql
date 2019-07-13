@@ -61,7 +61,7 @@ public class BulkLoader {
 
         try {
             Configuration config = new Configuration();
-            String url = "jdbc:mysql://localhost/" + config.database();
+            String url = "jdbc:mysql://" + config.host() + ":" + config.port() + "/" + config.database();
             Connection db = Db.connect(url, config.user(), config.password());
             purge(db, config.database());
             load(db, config.database(), config.datasetDirectory());

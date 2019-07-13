@@ -1,3 +1,9 @@
+# Host for the database, a name or an IP address; probably no need to change this field
+host:localhost
+
+# Port to access the database; probably no need to change this field
+port:3306
+
 # Name of the database; no need to change this field
 database:ldbc
 

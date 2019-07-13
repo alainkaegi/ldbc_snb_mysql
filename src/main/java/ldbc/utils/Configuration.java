@@ -33,6 +33,8 @@ public class Configuration {
     private boolean explain;
 
     // Required properties.
+    private String host;
+    private String port;
     private String database;
     private String user;
     private String password;
@@ -53,6 +55,8 @@ public class Configuration {
             measureLatency = config.getProperty("measureLatency", "false").equals("true");
             printHeapUsage = config.getProperty("printHeapUsage", "false").equals("true");
             explain = config.getProperty("explain", "false").equals("true");
+            if ((host = config.getProperty("host")) == null) throw new MissingConfigurationException(configFilename + ": host: No such field defined");
+            if ((port = config.getProperty("port")) == null) throw new MissingConfigurationException(configFilename + ": port: No such field defined");
             if ((database = config.getProperty("database")) == null) throw new MissingConfigurationException(configFilename + ": database: No such field defined");
             if ((user = config.getProperty("user")) == null) throw new MissingConfigurationException(configFilename + ": user: No such field defined");
             if ((password = config.getProperty("password")) == null) throw new MissingConfigurationException(configFilename + ": password: No such field defined");
@@ -90,6 +94,18 @@ public class Configuration {
      * @return true if we must report heap usage
      */
     public boolean printHeapUsage() { return printHeapUsage; }
+
+    /**
+     * A host for the database.
+     * @return a name or IP address for the host
+     */
+    public String host() { return host; }
+
+    /**
+     * A port to access the database.
+     * @return a port number to access the database
+     */
+    public String port() { return port; }
 
     /**
      * A name for the database.
