@@ -105,11 +105,11 @@ default_time_zone = "+00:00"
 
 Once in the MySQL monitor, enter these commands:
 
-- `CREATE USER 'ldbc'@'localhost' IDENTIFIED BY '<password>';`
+- `CREATE USER 'ldbc' IDENTIFIED BY '<password>';`
   (note the password for later use in these instructions)
 - `CREATE DATABASE ldbc;`
-- `GRANT ALL PRIVILEGES ON ldbc.* TO 'ldbc'@'localhost';`
-- `GRANT FILE ON *.* TO 'ldbc'@'localhost';`
+- `GRANT ALL PRIVILEGES ON ldbc.* TO 'ldbc';`
+- `GRANT FILE ON *.* TO 'ldbc';`
 
 Generate the Dataset
 --------------------
