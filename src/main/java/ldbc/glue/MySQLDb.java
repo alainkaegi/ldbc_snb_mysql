@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.glue;

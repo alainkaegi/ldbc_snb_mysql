@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Alain Kägi
+ * Copyright © 2017-2019 Alain Kägi
  */
 
 package ldbc.queries;

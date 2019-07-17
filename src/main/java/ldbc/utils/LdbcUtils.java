@@ -5,7 +5,7 @@
  * properly (e.g., disabling auto commit) if these queries are used in
  * the context of a larger transaction.
  *
- * Copyright © 2018, 2019 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.utils;
