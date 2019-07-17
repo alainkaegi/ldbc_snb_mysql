@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery7Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -101,48 +103,54 @@ public class Query7 implements ExecutableQuery {
 
     /**
      * Recent likes (seventh complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param limit     An upper bound on the number of results returned
      * @return the top 'limit' recent likes on the given person's messages
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery7Result> query(Connection db, long personId, int limit) throws SQLException {
+    public static List<LdbcQuery7Result> query(HikariDataSource ds, long personId, int limit) throws SQLException {
         List<LdbcQuery7Result> results = new ArrayList<>();
 
         Set<Long> likers = new HashSet<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, personId);
-        s.setLong(3, personId);
-        ResultSet r = s.executeQuery();
-        while (r.next() && results.size() < limit) {
-            long likerId = r.getLong("personId");
+        ResultSet r = null;
 
-            // Skip a liker we have already seen (I do not know how to
-            // fold this functionality directly in the SQL query).
-            if (likers.contains(likerId))
-                continue;
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            s.setLong(3, personId);
+            r = s.executeQuery();
+            while (r.next() && results.size() < limit) {
+                long likerId = r.getLong("personId");
 
-            likers.add(likerId);
+                // Skip a liker we have already seen (I do not know how to
+                // fold this functionality directly in the SQL query).
+                if (likers.contains(likerId))
+                    continue;
 
-            LdbcQuery7Result result = new LdbcQuery7Result(
-                likerId,
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getLong("date"),
-                r.getLong("U.messageId"),
+                likers.add(likerId);
 
-                // One or the other field must be empty.
-                r.getString("Message.content") + r.getString("Message.imageFile"),
+                LdbcQuery7Result result = new LdbcQuery7Result(
+                    likerId,
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getLong("date"),
+                    r.getLong("U.messageId"),
 
-                r.getInt("latency"),
-                r.getInt("isFriendOfStartPerson") == 0);
-            results.add(result);
+                    // One or the other field must be empty.
+                    r.getString("Message.content") + r.getString("Message.imageFile"),
+
+                    r.getInt("latency"),
+                    r.getInt("isFriendOfStartPerson") == 0);
+                results.add(result);
+            }
+            c.commit();
         }
-        r.close();
-        s.close();
+        finally {
+            if (r != null) r.close();
+        }
 
         return results;
     }
@@ -155,8 +163,9 @@ public class Query7 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setLong(3, personId);
@@ -171,7 +180,7 @@ public class Query7 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -193,7 +202,7 @@ public class Query7 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
 

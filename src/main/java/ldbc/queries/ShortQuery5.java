@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcShortQuery5MessageCreatorResult;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,12 +22,12 @@ public class ShortQuery5 {
 
     /**
      * Get the message's creator (fifth short read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param messageId  A message's unique identifier
      * @return the message's creator
      * @throws SQLException if a database access error occurs
      */
-    public static LdbcShortQuery5MessageCreatorResult query(Connection db, long messageId) throws SQLException {
+    public static LdbcShortQuery5MessageCreatorResult query(HikariDataSource ds, long messageId) throws SQLException {
         LdbcShortQuery5MessageCreatorResult result = null;
 
         String query =
@@ -36,16 +38,21 @@ public class ShortQuery5 {
             "          Person " +
             "    WHERE MessageHasCreatorPerson.messageId = ? " +
             "      AND Person.id = MessageHasCreatorPerson.personId";
-        PreparedStatement s = db.prepareStatement(query);
-        s.setLong(1, messageId);
-        ResultSet r = s.executeQuery();
-        if (r.next())
-            result = new LdbcShortQuery5MessageCreatorResult(
-                r.getLong("Person.id"),
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"));
-        r.close();
-        s.close();
+        ResultSet r = null;
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(query)) {
+            s.setLong(1, messageId);
+            r = s.executeQuery();
+            if (r.next())
+                result = new LdbcShortQuery5MessageCreatorResult(
+                    r.getLong("Person.id"),
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"));
+            c.commit();
+        }
+        finally {
+            if (r != null) r.close();
+        }
 
         return result;
     }

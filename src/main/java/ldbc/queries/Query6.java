@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery6Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -84,31 +86,36 @@ public class Query6 implements ExecutableQuery {
 
     /**
      * Tag co-occurrence (sixth complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param tag       A tag name
      * @param limit     The upper bound on the number of results returned
      * @return the top 'limit' other tags that occurs with the given tag in posts created by the given person's friends
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery6Result> query(Connection db, long personId, String tag, int limit) throws SQLException {
+    public static List<LdbcQuery6Result> query(HikariDataSource ds, long personId, String tag, int limit) throws SQLException {
         List<LdbcQuery6Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, personId);
-        s.setString(3, tag);
-        s.setString(4, tag);
-        s.setInt(5, limit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery6Result result = new LdbcQuery6Result(
-                r.getString("Tag.name"),
-                r.getInt("COUNT(*)"));
-            results.add(result);
+        ResultSet r = null;
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setLong(2, personId);
+            s.setString(3, tag);
+            s.setString(4, tag);
+            s.setInt(5, limit);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcQuery6Result result = new LdbcQuery6Result(
+                    r.getString("Tag.name"),
+                    r.getInt("COUNT(*)"));
+                results.add(result);
+            }
+            c.commit();
         }
-        r.close();
-        s.close();
+        finally {
+            if (r != null) r.close();
+        }
 
         return results;
     }
@@ -122,8 +129,9 @@ public class Query6 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, String tag, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, String tag, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setString(3, tag);
@@ -140,7 +148,7 @@ public class Query6 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -163,7 +171,7 @@ public class Query6 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             String tag = queryParameters.getString();

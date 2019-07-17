@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery8Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -65,28 +67,36 @@ public class Query8 implements ExecutableQuery {
 
     /**
      * Recent replies (eighth complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param limit     An upper bound on the number of results returned
      * @return The top 'limit' most recent comments that are replies to messages created by the given person
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery8Result> query(Connection db, long personId, int limit) throws SQLException {
+    public static List<LdbcQuery8Result> query(HikariDataSource ds, long personId, int limit) throws SQLException {
         List<LdbcQuery8Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setInt(2, limit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery8Result result = new LdbcQuery8Result(
-                r.getLong("Person.id"),
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getLong("Message.creationDate"),
-                r.getLong("Message.id"),
-                r.getString("Message.content"));
-            results.add(result);
+        ResultSet r = null;
+
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setInt(2, limit);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcQuery8Result result = new LdbcQuery8Result(
+                    r.getLong("Person.id"),
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getLong("Message.creationDate"),
+                    r.getLong("Message.id"),
+                    r.getString("Message.content"));
+                results.add(result);
+            }
+            c.commit();
+        }
+        finally {
+            if (r != null) r.close();
         }
 
         return results;
@@ -100,8 +110,9 @@ public class Query8 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setInt(2, limit);
         return s.executeQuery();
@@ -115,7 +126,7 @@ public class Query8 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -137,7 +148,7 @@ public class Query8 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
 

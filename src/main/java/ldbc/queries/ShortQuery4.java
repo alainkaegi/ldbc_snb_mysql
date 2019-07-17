@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcShortQuery4MessageContentResult;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,12 +22,12 @@ public class ShortQuery4 {
 
     /**
      * Get a message's content (fourth short read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param messageId  A message's unique identifier
      * @return the message's content
      * @throws SQLException if a database access error occurs
      */
-    public static LdbcShortQuery4MessageContentResult query(Connection db, long messageId) throws SQLException {
+    public static LdbcShortQuery4MessageContentResult query(HikariDataSource ds, long messageId) throws SQLException {
         LdbcShortQuery4MessageContentResult result = null;
 
         String query =
@@ -34,18 +36,23 @@ public class ShortQuery4 {
             "          Message.content " +
             "     FROM Message " +
             "    WHERE Message.id = ?";
-        PreparedStatement s = db.prepareStatement(query);
-        s.setLong(1, messageId);
-        ResultSet r = s.executeQuery();
-        if (r.next())
-            result = new LdbcShortQuery4MessageContentResult(
+        ResultSet r = null;
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(query)) {
+            s.setLong(1, messageId);
+            r = s.executeQuery();
+            if (r.next())
+                result = new LdbcShortQuery4MessageContentResult(
 
-                // One or the other field must be empty.
-                r.getString("Message.imageFile") + r.getString("Message.content"),
+                    // One or the other field must be empty.
+                    r.getString("Message.imageFile") + r.getString("Message.content"),
 
-                r.getLong("Message.creationDate"));
-        r.close();
-        s.close();
+                    r.getLong("Message.creationDate"));
+            c.commit();
+        }
+        finally {
+            if (r != null) r.close();
+        }
 
         return result;
     }

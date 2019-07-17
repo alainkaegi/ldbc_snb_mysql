@@ -6,6 +6,8 @@ package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery12Result;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -72,14 +74,14 @@ public class Query12 implements ExecutableQuery {
 
     /**
      * Expert search (12th complex read query).
-     * @param db            A database handle
+     * @param ds            A data source
      * @param personId      The person's unique identifier
      * @param tagClassName  The tag class's name
      * @param limit         An upper bound on the number of results returned
      * @return the top 'limit' friends of the given person who created comments in response to posts; consider only posts with tags within the given class
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery12Result> query(Connection db, long personId, String tagClassName, int limit) throws SQLException {
+    public static List<LdbcQuery12Result> query(HikariDataSource ds, long personId, String tagClassName, int limit) throws SQLException {
         List<LdbcQuery12Result> results = new ArrayList<>();
 
         // Create a priority queue to keep the results sorted and
@@ -92,22 +94,23 @@ public class Query12 implements ExecutableQuery {
         Map<Long, Query12PartialResult> partials = new HashMap<>();
         Set<Long> comments = new TreeSet<>();
 
-        try {
-            db.setAutoCommit(false);
+        ResultSet r = null;
 
-            long tagClassId = LdbcUtils.getTagClassId(db, tagClassName);
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+
+            long tagClassId = LdbcUtils.getTagClassId(c, tagClassName);
 
             // Execute the SQL query and update partial results as necessary.
-            PreparedStatement s = db.prepareStatement(queryString);
             s.setLong(1, personId);
-            ResultSet r = s.executeQuery();
+            r = s.executeQuery();
             while (r.next()) {
                 long parentPostTagId = r.getLong("PostHasTagTag.tagId");
-                long parentPostTagClassId = LdbcUtils.getTypeTagClassIdOf(db, parentPostTagId);
+                long parentPostTagClassId = LdbcUtils.getTypeTagClassIdOf(c, parentPostTagId);
 
                 // Skip if the post's tag is not in the given class.
                 if (parentPostTagClassId != tagClassId
-                    && !LdbcUtils.isTagClassSubclassOfTagClass(db, parentPostTagClassId, tagClassId))
+                    && !LdbcUtils.isTagClassSubclassOfTagClass(c, parentPostTagClassId, tagClassId))
                     continue;
 
                 long friendId = r.getLong("PersonKnowsPerson.person2Id");
@@ -128,9 +131,6 @@ public class Query12 implements ExecutableQuery {
                     partial.addTag(parentPostTagId);
                 }
             }
-
-            r.close();
-            s.close();
 
             // Iterate over the partial results and add to the sorting queue.
             for (Map.Entry<Long, Query12PartialResult> entry : partials.entrySet()) {
@@ -158,20 +158,20 @@ public class Query12 implements ExecutableQuery {
                 // Convert tag identifiers to strings.
                 Set<String> tags = new TreeSet<>();
                 for (long tagId : partials.get(friendId).tags())
-                    tags.add(LdbcUtils.getTagName(db, tagId));
+                    tags.add(LdbcUtils.getTagName(c, tagId));
 
                 LdbcQuery12Result result = new LdbcQuery12Result(
                     friendId,
-                    LdbcUtils.getFirstName(db, friendId),
-                    LdbcUtils.getLastName(db, friendId),
+                    LdbcUtils.getFirstName(c, friendId),
+                    LdbcUtils.getLastName(c, friendId),
                     tags,
                     e.replyCount());
                 results.add(0, result); // Add at the front.
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
+            if (r != null) r.close();
         }
 
         return results;
@@ -186,8 +186,9 @@ public class Query12 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person with the given first name
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, String tagClassName, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, String tagClassName, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         return s.executeQuery();
     }
@@ -200,7 +201,7 @@ public class Query12 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -223,7 +224,7 @@ public class Query12 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             String tagClassName = queryParameters.getString();
