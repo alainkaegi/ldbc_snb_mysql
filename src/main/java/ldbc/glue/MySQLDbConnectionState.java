@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-//import ldbc.utils.Configuration;
 import ldbc.utils.Db;
 
 /**
@@ -24,9 +23,6 @@ public class MySQLDbConnectionState extends DbConnectionState {
     private Connection client;
 
     public MySQLDbConnectionState(String url, String user, String password) throws DbException {
-        //Configuration config = new Configuration();
-
-        //String url = "jdbc:mysql://localhost/" + config.database();
         try {
             client = Db.connect(url, user, password);
         }

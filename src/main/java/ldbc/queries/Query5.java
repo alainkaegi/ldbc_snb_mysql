@@ -115,7 +115,6 @@ public class Query5 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     public static List<LdbcQuery5Result> query(Connection db, long personId, long date, int limit) throws SQLException {
-
         List<LdbcQuery5Result> results = new ArrayList<>();
 
         try {

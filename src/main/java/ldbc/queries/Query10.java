@@ -185,7 +185,6 @@ public class Query10 implements ExecutableQuery {
 
                 if (startPersonInterests.contains(tagId))
                     matchingInterest = true;
-
             }
 
             // Process the last friend/post pair.
