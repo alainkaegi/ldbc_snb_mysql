@@ -61,7 +61,7 @@ public class BulkLoader {
 
         try {
             Configuration config = new Configuration();
-            String url = "jdbc:mysql://localhost/" + config.database();
+            String url = "jdbc:mysql://" + config.host() + ":" + config.port() + "/" + config.database();
             Connection db = Db.connect(url, config.user(), config.password());
             purge(db, config.database());
             load(db, config.database(), config.datasetDirectory());
@@ -296,7 +296,7 @@ public class BulkLoader {
                 "content VARCHAR(2100), " +
                 "length INT, " +
                 "PRIMARY KEY (id)",
-            "comment.csv",
+            "comment_0_0.csv",
             "C0TCC0CC"
         ),
         new TableInformation(
@@ -305,7 +305,7 @@ public class BulkLoader {
                 "title VARCHAR(100), " +
                 "creationDate BIGINT, " +
                 "PRIMARY KEY (id)",
-            "forum.csv",
+            "forum_0_0.csv",
             "CCT"
         ),
         new TableInformation(
@@ -313,7 +313,7 @@ public class BulkLoader {
             "id BIGINT NOT NULL, " +
                 "name VARCHAR(150), " +
                 "PRIMARY KEY (id)",
-            "organisation.csv",
+            "organisation_0_0.csv",
             "CXCX"
         ),
         new TableInformation(
@@ -327,7 +327,7 @@ public class BulkLoader {
                 "locationIP VARCHAR(40), " +
                 "browserUsed VARCHAR(40), " +
                 "PRIMARY KEY (id)",
-            "person.csv",
+            "person_0_0.csv",
             "CCCCDTCC"
         ),
         new TableInformation(
@@ -335,13 +335,13 @@ public class BulkLoader {
             "id BIGINT NOT NULL, " +
                 "name VARCHAR(100), " +
                 "PRIMARY KEY (id)",
-            "place.csv",
+            "place_0_0.csv",
             "CCXX"
         ),
         new TableInformation(
             "Message",
             "", // Merge Post and Comment into Message
-            "post.csv",
+            "post_0_0.csv",
             "CCTCCCCC"
         ),
         new TableInformation(
@@ -349,7 +349,7 @@ public class BulkLoader {
             "id BIGINT NOT NULL, " +
                 "name VARCHAR(100), " +
                 "PRIMARY KEY (id)",
-            "tag.csv",
+            "tag_0_0.csv",
             "CCX"
         ),
         new TableInformation(
@@ -357,7 +357,7 @@ public class BulkLoader {
             "id BIGINT NOT NULL, " +
                 "name VARCHAR(40), " +
                 "PRIMARY KEY (id)",
-            "tagclass.csv",
+            "tagclass_0_0.csv",
             "CCX"
         ),
 
@@ -366,41 +366,41 @@ public class BulkLoader {
             "MessageHasCreatorPerson",
             "messageId BIGINT, " +
                 "personId BIGINT",
-            "comment_hasCreator_person.csv",
+            "comment_hasCreator_person_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "CommentHasTagTag",
             "commentId BIGINT, " +
                 "tagId BIGINT",
-            "comment_hasTag_tag.csv",
+            "comment_hasTag_tag_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "CommentIsLocatedInPlace",
             "commentId BIGINT, " +
                 "placeId BIGINT",
-            "comment_isLocatedIn_place.csv",
+            "comment_isLocatedIn_place_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "CommentReplyOfMessage",
             "commentId BIGINT, " +
                 "messageId BIGINT",
-            "comment_replyOf_comment.csv",
+            "comment_replyOf_comment_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "CommentReplyOfMessage",
             "", // Merge CommentReplyOfPost and CommentReplyOfComment into CommentReplyOfMessage
-            "comment_replyOf_post.csv",
+            "comment_replyOf_post_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "ForumContainerOfPost",
             "forumId BIGINT, " +
                 "postId BIGINT",
-            "forum_containerOf_post.csv",
+            "forum_containerOf_post_0_0.csv",
             "CC"
         ),
         new TableInformation(
@@ -408,49 +408,49 @@ public class BulkLoader {
             "forumId BIGINT, " +
                 "personId BIGINT, " +
                 "joinDate BIGINT",
-            "forum_hasMember_person.csv",
+            "forum_hasMember_person_0_0.csv",
             "CCT"
         ),
         new TableInformation(
             "ForumHasModeratorPerson",
             "forumId BIGINT, " +
                 "personId BIGINT",
-            "forum_hasModerator_person.csv",
+            "forum_hasModerator_person_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "ForumHasTagTag",
             "forumId BIGINT, " +
                 "tagId BIGINT",
-            "forum_hasTag_tag.csv",
+            "forum_hasTag_tag_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "OrganisationIsLocatedInPlace",
             "organisationId BIGINT, " +
                 "placeId BIGINT",
-            "organisation_isLocatedIn_place.csv",
+            "organisation_isLocatedIn_place_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "PersonEmailEmailAddress",
             "personId BIGINT, " +
                 "email VARCHAR(80)",
-            "person_email_emailaddress.csv",
+            "person_email_emailaddress_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "PersonHasInterestTag",
             "personId BIGINT, " +
                 "tagId BIGINT",
-            "person_hasInterest_tag.csv",
+            "person_hasInterest_tag_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "PersonIsLocatedInPlace",
             "personId BIGINT, " +
                 "placeId BIGINT",
-            "person_isLocatedIn_place.csv",
+            "person_isLocatedIn_place_0_0.csv",
             "CC"
         ),
         new TableInformation(
@@ -458,13 +458,13 @@ public class BulkLoader {
             "person1Id BIGINT, " +
                 "person2Id BIGINT, " +
                 "creationDate BIGINT",
-            "person_knows_person.csv",
+            "person_knows_person_0_0.csv",
             "CCT"
         ),
         new TableInformation( // load relationship again, but with the first two columns swapped
             "PersonKnowsPerson",
             "",
-            "person_knows_person.csv",
+            "person_knows_person_0_0.csv",
             "SST"
         ),
         new TableInformation(
@@ -472,7 +472,7 @@ public class BulkLoader {
             "personId BIGINT, " +
                 "commentId BIGINT, " +
                 "creationDate BIGINT",
-            "person_likes_comment.csv",
+            "person_likes_comment_0_0.csv",
             "CCT"
         ),
         new TableInformation(
@@ -480,14 +480,14 @@ public class BulkLoader {
             "personId BIGINT, " +
                 "postId BIGINT, " +
                 "creationDate BIGINT",
-            "person_likes_post.csv",
+            "person_likes_post_0_0.csv",
             "CCT"
         ),
         new TableInformation(
             "PersonSpeaksLanguage",
             "personId BIGINT, " +
                 "language VARCHAR(40)",
-            "person_speaks_language.csv",
+            "person_speaks_language_0_0.csv",
             "CC"
         ),
         new TableInformation(
@@ -495,7 +495,7 @@ public class BulkLoader {
             "personId BIGINT, " +
                 "organisationId BIGINT, " +
                 "classYear INT",
-            "person_studyAt_organisation.csv",
+            "person_studyAt_organisation_0_0.csv",
             "CCC"
         ),
         new TableInformation(
@@ -503,48 +503,48 @@ public class BulkLoader {
             "personId BIGINT, " +
                 "organisationId BIGINT, " +
                 "workFrom INT",
-            "person_workAt_organisation.csv",
+            "person_workAt_organisation_0_0.csv",
             "CCC"
         ),
         new TableInformation(
             "PlaceIsPartOfPlace",
             "place1Id BIGINT, " +
                 "place2Id BIGINT",
-            "place_isPartOf_place.csv",
+            "place_isPartOf_place_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "MessageHasCreatorPerson",
             "", // Merge PostHasCreatorPerson and CommentHasCreatorPerson into MessageHasCreatorPerson
-            "post_hasCreator_person.csv",
+            "post_hasCreator_person_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "PostHasTagTag",
             "postId BIGINT, " +
                 "tagId BIGINT",
-            "post_hasTag_tag.csv",
+            "post_hasTag_tag_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "PostIsLocatedInPlace",
             "postId BIGINT, " +
                 "placeId BIGINT",
-            "post_isLocatedIn_place.csv",
+            "post_isLocatedIn_place_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "TagHasTypeTagClass",
             "tagId BIGINT, " +
                 "tagClassId BIGINT",
-            "tag_hasType_tagclass.csv",
+            "tag_hasType_tagclass_0_0.csv",
             "CC"
         ),
         new TableInformation(
             "TagClassIsSubclassOfTagClass",
             "tagClass1Id BIGINT, " +
                 "tagClass2Id BIGINT",
-            "tagclass_isSubclassOf_tagclass.csv",
+            "tagclass_isSubclassOf_tagclass_0_0.csv",
             "CC"
         )
     };

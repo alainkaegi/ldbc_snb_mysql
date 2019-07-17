@@ -37,7 +37,7 @@ public class Query12 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query12";
-    private static final String queryParameterFilename = "query_12_param.txt";
+    private static final String queryParameterFilename = "interactive_12_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(.+)";
     private static final int queryLimit = 20;
     // Friends, their comments, and the comments' parent posts' tags.

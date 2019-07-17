@@ -26,7 +26,7 @@ public class Query13 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query13";
-    private static final String queryParameterFilename = "query_13_param.txt";
+    private static final String queryParameterFilename = "interactive_13_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
 
     /** A minimal constructor. */

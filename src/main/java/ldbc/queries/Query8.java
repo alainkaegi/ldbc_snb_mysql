@@ -31,7 +31,7 @@ public class Query8 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query8";
-    private static final String queryParameterFilename = "query_8_param.txt";
+    private static final String queryParameterFilename = "interactive_8_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)";
     private static final int queryLimit = 20;
     private static final String queryString =

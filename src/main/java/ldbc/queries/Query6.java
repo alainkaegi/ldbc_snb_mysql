@@ -28,7 +28,7 @@ public class Query6 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query6";
-    private static final String queryParameterFilename = "query_6_param.txt";
+    private static final String queryParameterFilename = "interactive_6_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(.+)";
     private static final int queryLimit = 10;
     // Tags co-occurring with the given tag.

@@ -30,7 +30,7 @@ public class Query2 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query2";
-    private static final String queryParameterFilename = "query_2_param.txt";
+    private static final String queryParameterFilename = "interactive_2_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
     private static final int queryLimit = 20;
     // Messages from a person's friends created before a date.

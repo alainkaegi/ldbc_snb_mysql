@@ -40,7 +40,7 @@ public class Query1 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query1";
-    private static final String queryParameterFilename = "query_1_param.txt";
+    private static final String queryParameterFilename = "interactive_1_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(.+)";
     private static final int queryLimit = 20;
     // Friend of a person (and details about that friend).
