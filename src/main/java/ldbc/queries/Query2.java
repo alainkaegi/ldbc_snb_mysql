@@ -1,10 +1,12 @@
 /*
- * Copyright © 2017-2018 Alain Kägi
+ * Copyright © 2017-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery2Result;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,7 +32,7 @@ public class Query2 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query2";
-    private static final String queryParameterFilename = "query_2_param.txt";
+    private static final String queryParameterFilename = "interactive_2_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
     private static final int queryLimit = 20;
     // Messages from a person's friends created before a date.
@@ -68,36 +70,42 @@ public class Query2 implements ExecutableQuery {
 
     /**
      * Recent messages by your friends (second complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param date      A date (milliseconds since the start of the epoch)
      * @param limit     An upper bound on the number of results returned
      * @return the top 'limit' recent messages created by the person's friends
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery2Result> query(Connection db, long personId, long date, int limit) throws SQLException {
+    public static List<LdbcQuery2Result> query(HikariDataSource ds, long personId, long date, int limit) throws SQLException {
         List<LdbcQuery2Result> results = new ArrayList<>();
 
-        PreparedStatement s = db.prepareStatement(queryString);
-        s.setLong(1, personId);
-        s.setLong(2, date);
-        s.setInt(3, limit);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcQuery2Result result = new LdbcQuery2Result(
-                r.getLong("Person.id"),
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getLong("Message.id"),
+        ResultSet r = null;
 
-                // One or the other field must be empty.
-                r.getString("Message.content") + r.getString("Message.imageFile"),
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
+            s.setLong(1, personId);
+            s.setLong(2, date);
+            s.setInt(3, limit);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcQuery2Result result = new LdbcQuery2Result(
+                    r.getLong("Person.id"),
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getLong("Message.id"),
 
-                r.getLong("Message.creationDate"));
-            results.add(result);
+                    // One or the other field must be empty.
+                    r.getString("Message.content") + r.getString("Message.imageFile"),
+
+                    r.getLong("Message.creationDate"));
+                results.add(result);
+            }
+            c.commit();
         }
-        r.close();
-        s.close();
+        finally {
+            if (r != null) r.close();
+        }
 
         return results;
     }
@@ -111,8 +119,9 @@ public class Query2 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, long date, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, long date, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, date);
         s.setInt(3, queryLimit);
@@ -127,7 +136,7 @@ public class Query2 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -150,7 +159,7 @@ public class Query2 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long date = queryParameters.getLong();

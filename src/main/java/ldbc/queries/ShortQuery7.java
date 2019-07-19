@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018, 2019 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcShortQuery7MessageRepliesResult;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,12 +27,12 @@ public class ShortQuery7 {
 
     /**
      * Get a message's replies (seventh short read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param messageId  A message's unique identifier
      * @return the message's replies messages
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcShortQuery7MessageRepliesResult> query(Connection db, long messageId) throws SQLException {
+    public static List<LdbcShortQuery7MessageRepliesResult> query(HikariDataSource ds, long messageId) throws SQLException {
         List<LdbcShortQuery7MessageRepliesResult> results = new ArrayList<>();
 
         String knowsQuery =
@@ -64,19 +66,17 @@ public class ShortQuery7 {
         ResultSet r1 = null;
         ResultSet r = null;
 
-        try {
-            db.setAutoCommit(false);
-
+        try (Connection c = ds.getConnection()) {
             // The friends of the message's author.
             Set<Long> friendsOfAuthor = new HashSet<>();
-            s1 = db.prepareStatement(knowsQuery);
+            s1 = c.prepareStatement(knowsQuery);
             s1.setLong(1, messageId);
             r1 = s1.executeQuery();
             while (r1.next()) {
                 friendsOfAuthor.add(r1.getLong("PersonKnowsPerson.person2id"));
             }
 
-            s = db.prepareStatement(mainQuery);
+            s = c.prepareStatement(mainQuery);
             s.setLong(1, messageId);
             r = s.executeQuery();
             while (r.next()) {
@@ -95,9 +95,8 @@ public class ShortQuery7 {
                 results.add(result);
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
             if (r1 != null) { r1.close(); }
             if (s1 != null) { s1.close(); }
             if (r != null) { r.close(); }

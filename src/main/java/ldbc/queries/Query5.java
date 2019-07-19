@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery5Result;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -36,7 +38,7 @@ public class Query5 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query5";
-    private static final String queryParameterFilename = "query_5_param.txt";
+    private static final String queryParameterFilename = "interactive_5_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
     private static final int queryLimit = 20;
     // Messages created by friends and friends of friends who joined
@@ -107,56 +109,49 @@ public class Query5 implements ExecutableQuery {
 
     /**
      * New groups (fifth complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param date      The date (number of milliseconds since beginning of epoch)
      * @param limit     The upper bound on the number of results returned
      * @return the top 'limit' forums joined by friends of the given person after the given date
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery5Result> query(Connection db, long personId, long date, int limit) throws SQLException {
-
+    public static List<LdbcQuery5Result> query(HikariDataSource ds, long personId, long date, int limit) throws SQLException {
         List<LdbcQuery5Result> results = new ArrayList<>();
 
-        try {
-            db.setAutoCommit(false);
+        ResultSet r = null;
 
-            PreparedStatement s;
-            ResultSet r;
-
+        try (Connection c = ds.getConnection();
+             PreparedStatement s1 = c.prepareStatement(subordinateQueryString);
+             PreparedStatement s2 = c.prepareStatement(queryString)) {
             // Number of posts in a given forum.
             Map<Long, Integer> counts = new HashMap<>();
 
             // Identify all the forums joined after the given date by
             // friends of the start person.  Reset the counts of all
             // these forums to zero.
-            s = db.prepareStatement(subordinateQueryString);
-            s.setLong(1, personId);
-            s.setLong(2, personId);
-            s.setLong(3, personId);
-            s.setLong(4, date);
-            r = s.executeQuery();
+            s1.setLong(1, personId);
+            s1.setLong(2, personId);
+            s1.setLong(3, personId);
+            s1.setLong(4, date);
+            r = s1.executeQuery();
             while (r.next())
                 counts.put(r.getLong("ForumHasMemberPerson.forumId"), 0);
             r.close();
-            s.close();
 
             // The main query returns all the posts in the forums
             // identified in the previous loop created by friends of
             // the start person.  Count those posts.
-            s = db.prepareStatement(queryString);
-            s.setLong(1, personId);
-            s.setLong(2, personId);
-            s.setLong(3, personId);
-            s.setLong(4, date);
-            r = s.executeQuery();
+            s2.setLong(1, personId);
+            s2.setLong(2, personId);
+            s2.setLong(3, personId);
+            s2.setLong(4, date);
+            r = s2.executeQuery();
             while (r.next()) {
                 long forumId = r.getLong("ForumHasMemberPerson.forumId");
                 // ignore r.getLong("ForumContainerOfPost.postId")
                 counts.put(forumId, counts.get(forumId) + 1);
             }
-            r.close();
-            s.close();
 
             // Iterate over all counts, add them to the priority
             // queue, and eliminate overflow entries.
@@ -186,14 +181,14 @@ public class Query5 implements ExecutableQuery {
             while (queue.size() != 0) {
                 Query5SortResult e = queue.poll(); // Dequeue.
                 LdbcQuery5Result result = new LdbcQuery5Result(
-                    LdbcUtils.getForumTitle(db, e.forumId()),
+                    LdbcUtils.getForumTitle(c, e.forumId()),
                     e.count());
                 results.add(0, result); // Add at the front.
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
+            if (r != null) r.close();
         }
 
         return results;
@@ -208,8 +203,9 @@ public class Query5 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, long date, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, long date, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setLong(3, personId);
@@ -225,7 +221,7 @@ public class Query5 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -248,7 +244,7 @@ public class Query5 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long date = queryParameters.getLong();

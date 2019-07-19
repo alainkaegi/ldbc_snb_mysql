@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.glue;
@@ -65,9 +65,10 @@ import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate6AddPost;
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate7AddComment;
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate8AddFriendship;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.io.IOException;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.util.Map;
@@ -138,7 +139,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery1 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery1Result> r = Query1.query(client, operation.personId(), operation.firstName(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -152,7 +153,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery2 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery2Result> r = Query2.query(client, operation.personId(), operation.maxDate().getTime(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -166,7 +167,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery3 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery3Result> r = Query3.query(client, operation.personId(), operation.countryXName(), operation.countryYName(), operation.startDate().getTime(), operation.durationDays(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -180,7 +181,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery4 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery4Result> r = Query4.query(client, operation.personId(), operation.startDate().getTime(), operation.durationDays(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -194,7 +195,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery5 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery5Result> r = Query5.query(client, operation.personId(), operation.minDate().getTime(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -208,7 +209,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery6 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery6Result> r = Query6.query(client, operation.personId(), operation.tagName(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -222,7 +223,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery7 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery7Result> r = Query7.query(client, operation.personId(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -236,7 +237,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery8 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery8Result> r = Query8.query(client, operation.personId(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -250,7 +251,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery9 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery9Result> r = Query9.query(client, operation.personId(), operation.maxDate().getTime(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -264,7 +265,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery10 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery10Result> r = Query10.query(client, operation.personId(), operation.month(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -278,7 +279,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery11 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery11Result> r = Query11.query(client, operation.personId(), operation.countryName(), operation.workFromYear(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -292,7 +293,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery12 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery12Result> r = Query12.query(client, operation.personId(), operation.tagClassName(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -306,7 +307,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery13 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 LdbcQuery13Result r = Query13.query(client, operation.person1Id(), operation.person2Id());
                 result.report(1, r, operation);
             }
@@ -320,7 +321,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcQuery14 operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcQuery14Result> r = Query14.query(client, operation.person1Id(), operation.person2Id());
                 result.report(r.size(), r, operation);
             }
@@ -337,7 +338,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery1PersonProfile operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 LdbcShortQuery1PersonProfileResult r = ShortQuery1.query(client, operation.personId());
                 result.report(1, r, operation);
             }
@@ -351,7 +352,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery2PersonPosts operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcShortQuery2PersonPostsResult> r = ShortQuery2.query(client, operation.personId(), operation.limit());
                 result.report(r.size(), r, operation);
             }
@@ -365,7 +366,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery3PersonFriends operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcShortQuery3PersonFriendsResult> r = ShortQuery3.query(client, operation.personId());
                 result.report(r.size(), r, operation);
             }
@@ -379,7 +380,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery4MessageContent operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 LdbcShortQuery4MessageContentResult r = ShortQuery4.query(client, operation.messageId());
                 result.report(1, r, operation);
             }
@@ -393,7 +394,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery5MessageCreator operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 LdbcShortQuery5MessageCreatorResult r = ShortQuery5.query(client, operation.messageId());
                 result.report(1, r, operation);
             }
@@ -407,7 +408,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery6MessageForum operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 LdbcShortQuery6MessageForumResult r = ShortQuery6.query(client, operation.messageId());
                 result.report(1, r, operation);
             }
@@ -421,7 +422,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcShortQuery7MessageReplies operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 List<LdbcShortQuery7MessageRepliesResult> r = ShortQuery7.query(client, operation.messageId());
                 result.report(r.size(), r, operation);
             }
@@ -438,7 +439,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate1AddPerson operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery1.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -452,7 +453,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate2AddPostLike operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery2.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -466,7 +467,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate3AddCommentLike operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery3.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -480,7 +481,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate4AddForum operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery4.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -494,7 +495,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate5AddForumMembership operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery5.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -508,7 +509,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate6AddPost operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery6.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -522,7 +523,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate7AddComment operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery7.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }
@@ -536,7 +537,7 @@ public class MySQLDb extends Db {
         @Override
         public void executeOperation(LdbcUpdate8AddFriendship operation, MySQLDbConnectionState state, ResultReporter result) throws DbException {
             try {
-                Connection client = state.getClient();
+                HikariDataSource client = state.getClient();
                 UpdateQuery8.query(client, operation);
                 result.report(0, LdbcNoResult.INSTANCE, operation);
             }

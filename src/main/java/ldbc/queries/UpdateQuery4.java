@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate4AddForum;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,53 +19,48 @@ public class UpdateQuery4 {
 
     /**
      * Add a forum.
-     * @param db          A database handle
+     * @param ds          A data source
      * @param parameters  A forum's full description
      * @throws SQLException if a database access error occurs
      */
-    public static void query(Connection db, LdbcUpdate4AddForum parameters) throws SQLException {
+    public static void query(HikariDataSource ds, LdbcUpdate4AddForum parameters) throws SQLException {
 
-        try {
-            db.setAutoCommit(false);
+        String addForumQuery =
+            "   INSERT INTO Forum " +
+            "        VALUES (?, " + // id
+            "                ?, " + // title
+            "                ?)";   // creationDate
 
-            PreparedStatement s;
+        String addModeratorLinkQuery =
+            "   INSERT INTO ForumHasModeratorPerson " +
+            "        VALUES (?, " + // forumId
+            "                ?)";   // personId
 
-            String addForumQuery =
-                "   INSERT INTO Forum " +
-                "        VALUES (?, " + // id
-                "                ?, " + // title
-                "                ?)";   // creationDate
-            s = db.prepareStatement(addForumQuery);
-            s.setLong(1, parameters.forumId());
-            s.setString(2, parameters.forumTitle());
-            s.setLong(3, parameters.creationDate().getTime());
-            s.executeUpdate();
+        String addTagLinkQuery =
+            "   INSERT INTO ForumHasTagTag " +
+            "        VALUES (?, " + // forumId
+            "                ?)";   // tagId
 
-            String addModeratorLinkQuery =
-                "   INSERT INTO ForumHasModeratorPerson " +
-                "        VALUES (?, " + // forumId
-                "                ?)";   // personId
-            s = db.prepareStatement(addModeratorLinkQuery);
-            s.setLong(1, parameters.forumId());
-            s.setLong(2, parameters.moderatorPersonId());
-            s.executeUpdate();
+        try (Connection c = ds.getConnection();
+             PreparedStatement addForumStatement = c.prepareStatement(addForumQuery);
+             PreparedStatement addModeratorLinktatement = c.prepareStatement(addModeratorLinkQuery);
+             PreparedStatement addTagLinkStatement = c.prepareStatement(addTagLinkQuery)) {
+            addForumStatement.setLong(1, parameters.forumId());
+            addForumStatement.setString(2, parameters.forumTitle());
+            addForumStatement.setLong(3, parameters.creationDate().getTime());
+            addForumStatement.executeUpdate();
 
-            String addTagLinkQuery =
-                "   INSERT INTO ForumHasTagTag " +
-                "        VALUES (?, " + // forumId
-                "                ?)";   // tagId
-            s = db.prepareStatement(addTagLinkQuery);
-            s.setLong(1, parameters.forumId());
+            addModeratorLinktatement.setLong(1, parameters.forumId());
+            addModeratorLinktatement.setLong(2, parameters.moderatorPersonId());
+            addModeratorLinktatement.executeUpdate();
+
+            addTagLinkStatement.setLong(1, parameters.forumId());
             for (long tagId : parameters.tagIds()) {
-                s.setLong(2, tagId);
-                s.executeUpdate();
+                addTagLinkStatement.setLong(2, tagId);
+                addTagLinkStatement.executeUpdate();
             }
 
-            s.close();
-
-            db.commit();
-        } finally {
-            db.setAutoCommit(true);
+            c.commit();
         }
 
     }

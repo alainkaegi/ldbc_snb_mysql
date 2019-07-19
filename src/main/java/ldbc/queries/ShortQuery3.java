@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcShortQuery3PersonFriendsResult;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,12 +25,12 @@ public class ShortQuery3 {
 
     /**
      * Get a person's recent messages (third short read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  A person's unique identifier
      * @return the person's recent messages
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcShortQuery3PersonFriendsResult> query(Connection db, long personId) throws SQLException {
+    public static List<LdbcShortQuery3PersonFriendsResult> query(HikariDataSource ds, long personId) throws SQLException {
         List<LdbcShortQuery3PersonFriendsResult> results = new ArrayList<>();
 
         String query =
@@ -42,19 +44,24 @@ public class ShortQuery3 {
             "      AND Person.id = PersonKnowsPerson.person2Id " +
             " ORDER BY PersonKnowsPerson.creationDate DESC, " +
             "          Person.id";
-        PreparedStatement s = db.prepareStatement(query);
-        s.setLong(1, personId);
-        ResultSet r = s.executeQuery();
-        while (r.next()) {
-            LdbcShortQuery3PersonFriendsResult result = new LdbcShortQuery3PersonFriendsResult(
-                r.getLong("Person.id"),
-                r.getString("Person.firstName"),
-                r.getString("Person.lastName"),
-                r.getLong("PersonKnowsPerson.creationDate"));
-            results.add(result);
+        ResultSet r = null;
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(query)) {
+            s.setLong(1, personId);
+            r = s.executeQuery();
+            while (r.next()) {
+                LdbcShortQuery3PersonFriendsResult result = new LdbcShortQuery3PersonFriendsResult(
+                    r.getLong("Person.id"),
+                    r.getString("Person.firstName"),
+                    r.getString("Person.lastName"),
+                    r.getLong("PersonKnowsPerson.creationDate"));
+                results.add(result);
+            }
+            c.commit();
         }
-        r.close();
-        s.close();
+        finally {
+            if (r != null) r.close();
+        }
 
         return results;
     }

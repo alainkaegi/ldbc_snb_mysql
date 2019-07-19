@@ -1,18 +1,16 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.glue;
 
 import com.ldbc.driver.DbConnectionState;
-import com.ldbc.driver.DbException;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.IOException;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-//import ldbc.utils.Configuration;
 import ldbc.utils.Db;
 
 /**
@@ -21,21 +19,30 @@ import ldbc.utils.Db;
  */
 public class MySQLDbConnectionState extends DbConnectionState {
 
-    private Connection client;
+    private HikariDataSource client;
 
-    public MySQLDbConnectionState(String url, String user, String password) throws DbException {
-        //Configuration config = new Configuration();
+    public MySQLDbConnectionState(String url, String user, String password) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(password);
+        config.setAutoCommit(false);
+        config.addDataSourceProperty("cachePrepStmts", true);
+        config.addDataSourceProperty("prepStmts", true);
+        config.addDataSourceProperty("prepStmtCacheSize", 250);
+        config.addDataSourceProperty("dataSource.prepStmtCacheSqlLimit", 2048);
+        config.addDataSourceProperty("dataSource.useServerPrepStmts", true);
+        config.addDataSourceProperty("dataSource.useLocalSessionState", true);
+        config.addDataSourceProperty("dataSource.rewriteBatchedStatements", true);
+        config.addDataSourceProperty("dataSource.cacheResultSetMetadata", true);
+        config.addDataSourceProperty("dataSource.cacheServerConfiguration", true);
+        config.addDataSourceProperty("dataSource.elideSetAutoCommits", true);
+        config.addDataSourceProperty("dataSource.maintainTimeStats", false);
 
-        //String url = "jdbc:mysql://localhost/" + config.database();
-        try {
-            client = Db.connect(url, user, password);
-        }
-        catch (SQLException e) {
-            throw new DbException(e.getMessage());
-        }
+        client = new HikariDataSource(config);
     }
 
-    public Connection getClient() {
+    public HikariDataSource getClient() {
         return client;
     }
 

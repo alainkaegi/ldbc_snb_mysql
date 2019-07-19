@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery14Result;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +36,7 @@ public class Query14 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query14";
-    private static final String queryParameterFilename = "query_14_param.txt";
+    private static final String queryParameterFilename = "interactive_14_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)";
 
     /** A minimal constructor. */
@@ -54,25 +56,22 @@ public class Query14 implements ExecutableQuery {
 
     /**
      * Weighted/unweighted paths (14th complex read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param person1Id  The start person's unique identifier
      * @param person2Id  The end person's unique identifier
      * @return all shortest paths between the given persons; compute a weight for each path
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery14Result> query(Connection db, long person1Id, long person2Id) throws SQLException {
-
+    public static List<LdbcQuery14Result> query(HikariDataSource ds, long person1Id, long person2Id) throws SQLException {
         List<LdbcQuery14Result> results = new ArrayList<>();
 
-        try {
-            db.setAutoCommit(false);
-
+        try (Connection c = ds.getConnection()) {
             // Find the length of the shortest path between the given persons.
-            int len = findShortestPathLength(db, person1Id, person2Id);
+            int len = findShortestPathLength(c, person1Id, person2Id);
             if (len > 0) {
                 List<Stack<Long>> paths;
                 // Find all paths between the given persons.
-                paths = findAllShortestPaths(db, person1Id, person2Id, len);
+                paths = findAllShortestPaths(c, person1Id, person2Id, len);
 
                 // Compute the weights and add to the results
                 // (unsorted for now).  To do so, iterate over the
@@ -87,15 +86,15 @@ public class Query14 implements ExecutableQuery {
 
                             // First look at the relationship previous
                             // friend -> friend.
-                            for (long messageId : LdbcUtils.getMessagesCreatedBy(db, prevFriendId)) {
+                            for (long messageId : LdbcUtils.getMessagesCreatedBy(c, prevFriendId)) {
                                 // Skip posts.
-                                if (LdbcUtils.isMessageAPost(db, messageId))
+                                if (LdbcUtils.isMessageAPost(c, messageId))
                                     continue;
 
-                                long parentMessageId = LdbcUtils.getParentMessageId(db, messageId);
-                                long authorId = LdbcUtils.getAuthorOf(db, parentMessageId);
+                                long parentMessageId = LdbcUtils.getParentMessageId(c, messageId);
+                                long authorId = LdbcUtils.getAuthorOf(c, parentMessageId);
                                 if (authorId == friendId) {
-                                    if (LdbcUtils.isMessageAPost(db, parentMessageId))
+                                    if (LdbcUtils.isMessageAPost(c, parentMessageId))
                                         weight += 1.0;
                                     else
                                         weight += 0.5;
@@ -104,15 +103,15 @@ public class Query14 implements ExecutableQuery {
 
                             // Second look at the relationship friend
                             // -> previous friend.
-                            for (long messageId : LdbcUtils.getMessagesCreatedBy(db, friendId)) {
+                            for (long messageId : LdbcUtils.getMessagesCreatedBy(c, friendId)) {
                                 // Skip posts.
-                                if (LdbcUtils.isMessageAPost(db, messageId))
+                                if (LdbcUtils.isMessageAPost(c, messageId))
                                     continue;
 
-                                long parentMessageId = LdbcUtils.getParentMessageId(db, messageId);
-                                long authorId = LdbcUtils.getAuthorOf(db, parentMessageId);
+                                long parentMessageId = LdbcUtils.getParentMessageId(c, messageId);
+                                long authorId = LdbcUtils.getAuthorOf(c, parentMessageId);
                                 if (authorId == prevFriendId) {
-                                    if (LdbcUtils.isMessageAPost(db, parentMessageId))
+                                    if (LdbcUtils.isMessageAPost(c, parentMessageId))
                                         weight += 1.0;
                                     else
                                         weight += 0.5;
@@ -129,9 +128,7 @@ public class Query14 implements ExecutableQuery {
                 }
             }
 
-            db.commit();
-        } finally {
-            db.setAutoCommit(true);
+            c.commit();
         }
 
         // Sort out results.
@@ -191,36 +188,37 @@ public class Query14 implements ExecutableQuery {
             "     FROM PersonKnowsPerson " +
             "    WHERE PersonKnowsPerson.person1Id = ?";
 
-        bfs:
-        while (!open.isEmpty()) {
+        ResultSet r = null;
 
-            for (long personId : open) {
+        try (PreparedStatement s = db.prepareStatement(friendQuery)) {
+            bfs:
+            while (!open.isEmpty()) {
+                for (long personId : open) {
+                    s.setLong(1, personId);
+                    r = s.executeQuery();
+                    while (r.next()) {
+                        long friendId = r.getLong("PersonKnowsPerson.person2Id");
 
-                PreparedStatement s = db.prepareStatement(friendQuery);
-                s.setLong(1, personId);
-                ResultSet r = s.executeQuery();
-                while (r.next()) {
-                    long friendId = r.getLong("PersonKnowsPerson.person2Id");
+                        if (close.contains(friendId))
+                            continue;
 
-                    if (close.contains(friendId))
-                        continue;
+                        nextOpen.add(friendId);
+                        close.add(friendId);
 
-                    nextOpen.add(friendId);
-                    close.add(friendId);
-
-                    if (friendId == person2Id) {
-                        pathLength = distance;
-                        break bfs;
+                        if (friendId == person2Id) {
+                            pathLength = distance;
+                            break bfs;
+                        }
                     }
                 }
 
-                r.close();
-                s.close();
+                ++distance;
+                open = nextOpen;
+                nextOpen = new LinkedList<>();
             }
-
-            ++distance;
-            open = nextOpen;
-            nextOpen = new LinkedList<>();
+        }
+        finally {
+            if (r != null) r.close();
         }
 
         return pathLength;
@@ -240,7 +238,6 @@ public class Query14 implements ExecutableQuery {
      * @throws SQLException if a database access error occurs
      */
     private static List<Stack<Long>> findAllShortestPaths(Connection db, long person1Id, long person2Id, int length) throws SQLException {
-
         // A candidate shortest path.
         Stack<Long> path = new Stack<>();
         // List of shortest paths found so far.
@@ -306,7 +303,7 @@ public class Query14 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -329,7 +326,7 @@ public class Query14 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         System.out.println("Explain is not supported for this query at this time.");
     }
 

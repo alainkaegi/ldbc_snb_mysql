@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate7AddComment;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,82 +19,79 @@ public class UpdateQuery7 {
 
     /**
      * Add a comment.
-     * @param db          A database handle
+     * @param ds          A data source
      * @param parameters  A comment's full description
      * @throws SQLException if a database access error occurs
      */
-    public static void query(Connection db, LdbcUpdate7AddComment parameters) throws SQLException {
+    public static void query(HikariDataSource ds, LdbcUpdate7AddComment parameters) throws SQLException {
 
-        try {
-            db.setAutoCommit(false);
+        String addCommentQuery =
+            "   INSERT INTO Message " +
+            "        VALUES (?, " +  // commentId
+            "                '', " + // no imageFile
+            "                ?, " +  // creationDate
+            "                ?, " +  // locationIP
+            "                ?, " +  // browserUsed
+            "                '', " + // no language
+            "                ?, " +  // content
+            "                ?)";    // length
 
-            PreparedStatement s;
+        String addAuthorLinkQuery =
+            "   INSERT INTO MessageHasCreatorPerson " +
+            "        VALUES (?, " + // commentId
+            "                ?)";   // personId
 
-            String addCommentQuery =
-                "   INSERT INTO Message " +
-                "        VALUES (?, " +  // commentId
-                "                '', " + // no imageFile
-                "                ?, " +  // creationDate
-                "                ?, " +  // locationIP
-                "                ?, " +  // browserUsed
-                "                '', " + // no language
-                "                ?, " +  // content
-                "                ?)";    // length
-            s = db.prepareStatement(addCommentQuery);
-            s.setLong(1, parameters.commentId());
-            s.setLong(2, parameters.creationDate().getTime());
-            s.setString(3, parameters.locationIp());
-            s.setString(4, parameters.browserUsed());
-            s.setString(5, parameters.content());
-            s.setInt(6, parameters.length());
-            s.executeUpdate();
+        String addCountryLinkQuery =
+            "   INSERT INTO CommentIsLocatedInPlace " +
+            "        VALUES (?, " + // commentId
+            "                ?)";   // countryId
 
-            String addAuthorLinkQuery =
-                "   INSERT INTO MessageHasCreatorPerson " +
-                "        VALUES (?, " + // commentId
-                "                ?)";   // personId
-            s = db.prepareStatement(addAuthorLinkQuery);
-            s.setLong(1, parameters.commentId());
-            s.setLong(2, parameters.authorPersonId());
-            s.executeUpdate();
+        String addReplyLinkQuery =
+            "   INSERT INTO CommentReplyOfMessage " +
+            "        VALUES (?, " + // commentId
+            "                ?)";   // messageId
 
-            String addCountryLinkQuery =
-                "   INSERT INTO CommentIsLocatedInPlace " +
-                "        VALUES (?, " + // commentId
-                "                ?)";   // countryId
-            s = db.prepareStatement(addCountryLinkQuery);
-            s.setLong(1, parameters.commentId());
-            s.setLong(2, parameters.countryId());
-            s.executeUpdate();
+        String addTagLinkQuery =
+            "   INSERT INTO CommentHasTagTag " +
+            "        VALUES (?, " + // commentId
+            "                ?)";   // tagId
 
-            String addReplyLinkQuery =
-                "   INSERT INTO CommentReplyOfMessage " +
-                "        VALUES (?, " + // commentId
-                "                ?)";   // messageId
+        try (Connection c = ds.getConnection();
+             PreparedStatement addCommentStatement = c.prepareStatement(addCommentQuery);
+             PreparedStatement addAuthorLinkStatement = c.prepareStatement(addAuthorLinkQuery);
+             PreparedStatement addCountryLinkStatement = c.prepareStatement(addCountryLinkQuery);
+             PreparedStatement addReplyLinkStatement = c.prepareStatement(addReplyLinkQuery);
+             PreparedStatement addTagLinkStatement = c.prepareStatement(addTagLinkQuery)) {
+            addCommentStatement.setLong(1, parameters.commentId());
+            addCommentStatement.setLong(2, parameters.creationDate().getTime());
+            addCommentStatement.setString(3, parameters.locationIp());
+            addCommentStatement.setString(4, parameters.browserUsed());
+            addCommentStatement.setString(5, parameters.content());
+            addCommentStatement.setInt(6, parameters.length());
+            addCommentStatement.executeUpdate();
+
+            addAuthorLinkStatement.setLong(1, parameters.commentId());
+            addAuthorLinkStatement.setLong(2, parameters.authorPersonId());
+            addAuthorLinkStatement.executeUpdate();
+
+            addCountryLinkStatement.setLong(1, parameters.commentId());
+            addCountryLinkStatement.setLong(2, parameters.countryId());
+            addCountryLinkStatement.executeUpdate();
+
             long messageId = parameters.replyToPostId();
             if (messageId == -1)
                 messageId = parameters.replyToCommentId();
-            s = db.prepareStatement(addReplyLinkQuery);
-            s.setLong(1, parameters.commentId());
-            s.setLong(2, messageId);
-            s.executeUpdate();
+            addReplyLinkStatement.setLong(1, parameters.commentId());
+            addReplyLinkStatement.setLong(2, messageId);
+            addReplyLinkStatement.executeUpdate();
 
-            String addTagLinkQuery =
-                "   INSERT INTO CommentHasTagTag " +
-                "        VALUES (?, " + // commentId
-                "                ?)";   // tagId
-            s = db.prepareStatement(addTagLinkQuery);
-            s.setLong(1, parameters.commentId());
+            addTagLinkStatement.setLong(1, parameters.commentId());
             for (long tagId : parameters.tagIds()) {
-                s.setLong(2, tagId);
-                s.executeUpdate();
+                addTagLinkStatement.setLong(2, tagId);
+                addTagLinkStatement.executeUpdate();
             }
 
-            s.close();
-
-            db.commit();
-        } finally {
-            db.setAutoCommit(true);
+            c.commit();
         }
 
     }

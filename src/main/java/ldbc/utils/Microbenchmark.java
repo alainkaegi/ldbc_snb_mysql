@@ -1,12 +1,14 @@
 /*
- * Copyright © 2017-2018 Alain Kägi
+ * Copyright © 2017-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
-import java.sql.Connection;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.SQLException;
 
+import ldbc.glue.MySQLDbConnectionState;
 import ldbc.utils.Db;
 import ldbc.utils.Configuration;
 
@@ -34,19 +36,20 @@ public class Microbenchmark {
     public static void executeQueryWithParametersFromFile(ExecutableQuery query, String queryName, String queryParameterFilename, String queryParameterFileLinePattern) {
 
         try {
-
             Configuration config = new Configuration();
 
-            String url = "jdbc:mysql://localhost/" + config.database();
+            String url = "jdbc:mysql://" + config.host() + ":" + config.port() + "/" + config.database();
             String parameterFQN = config.parameterFilesDirectory() + "/" + queryParameterFilename;
 
-            try {
+            MySQLDbConnectionState state = new MySQLDbConnectionState(url, config.user(), config.password());
 
-                Connection db = Db.connect(url, config.user(), config.password());
+            HikariDataSource ds = state.getClient();
+
+            try {
                 if (config.explain())
-                    doExplainQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern);
+                    doExplainQueryWithParametersFromFile(query, ds, parameterFQN, queryParameterFileLinePattern);
                 else
-                    doExecuteQueryWithParametersFromFile(query, db, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.printHeapUsage(), config.beVerbose());
+                    doExecuteQueryWithParametersFromFile(query, ds, parameterFQN, queryParameterFileLinePattern, config.measureLatency(), config.printHeapUsage(), config.beVerbose());
 
             }
             catch (QueryParameterFile.QueryParameterFileNotFoundException e) {
@@ -77,7 +80,7 @@ public class Microbenchmark {
     /**
      * Do execute a query, once per parameter line read from a file.
      * @param query  A function that executes queries with input from the substitution parameters
-     * @param db  A database handle
+     * @param ds  A database source
      * @param queryParameterQFilename  The qualified location of the input query subsitution parameters
      * @param queryParameterFileLinePattern  A regular expression describing one line of substitution parameter input
      * @param measureLatency  Report execution time if requested
@@ -87,13 +90,13 @@ public class Microbenchmark {
      * @throws SQLException if a database access error occurs
      * This is the lower-level function.  We time the run here.
      */
-    private static void doExecuteQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterQFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean printHeapUsage, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
+    private static void doExecuteQueryWithParametersFromFile(ExecutableQuery query, HikariDataSource ds, String queryParameterQFilename, String queryParameterFileLinePattern, boolean measureLatency, boolean printHeapUsage, boolean beVerbose) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
         QueryParameterFile queryParameters = new QueryParameterFile(queryParameterQFilename, queryParameterFileLinePattern);
 
         Timer timer = new Timer();
         timer.start();
 
-        query.executeQuery(db, queryParameters, beVerbose, printHeapUsage);
+        query.executeQuery(ds, queryParameters, beVerbose, printHeapUsage);
 
         timer.stop();
 
@@ -105,16 +108,16 @@ public class Microbenchmark {
     /**
      * Do explain a query using the first parameter line read from a file.
      * @param query  A function that prints the query execution plan
-     * @param db  A database handle
+     * @param ds  A database source
      * @param queryParameterQFilename  The qualified location of the input query substitution parameters
      * @param queryParameterFileLinePattern  A regular expression describing one line of substitution parameter input
      * @throws QueryParameterFileNotFoundException if the parameter file is not found
      * @throws SQLException if a database access error occurs
      */
-    private static void doExplainQueryWithParametersFromFile(ExecutableQuery query, Connection db, String queryParameterQFilename, String queryParameterFileLinePattern) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
+    private static void doExplainQueryWithParametersFromFile(ExecutableQuery query, HikariDataSource ds, String queryParameterQFilename, String queryParameterFileLinePattern) throws QueryParameterFile.QueryParameterFileNotFoundException, SQLException {
         QueryParameterFile queryParameters = new QueryParameterFile(queryParameterQFilename, queryParameterFileLinePattern);
 
-        query.explainQuery(db, queryParameters);
+        query.explainQuery(ds, queryParameters);
     }
 
 }

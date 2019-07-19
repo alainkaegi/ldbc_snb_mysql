@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery3Result;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +39,7 @@ public class Query3 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query3";
-    private static final String queryParameterFilename = "query_3_param.txt";
+    private static final String queryParameterFilename = "interactive_3_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)\\|(\\d+)\\|(\\d+)\\|(.+)\\|(.+)";
     private static final int queryLimit = 20;
     // Friends that have been in both the given countries in the given
@@ -116,7 +118,7 @@ public class Query3 implements ExecutableQuery {
 
     /**
      * Friends that have been to countries X and Y (third complex read query).
-     * @param db         A database handle
+     * @param ds         A data source
      * @param personId   The person's unique identifier
      * @param countryX   Country X's name
      * @param countryY   Country Y's name
@@ -126,8 +128,7 @@ public class Query3 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person that have visited countries X and Y
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery3Result> query(Connection db, long personId, String countryX, String countryY, long startDate, int duration, int limit) throws SQLException {
-
+    public static List<LdbcQuery3Result> query(HikariDataSource ds, long personId, String countryX, String countryY, long startDate, int duration, int limit) throws SQLException {
         // Create a priority queue to keep the results sorted and
         // limited to at most the requested 'limit' entries.  To make
         // this work, we inverse the sort order so we know it is safe
@@ -135,18 +136,18 @@ public class Query3 implements ExecutableQuery {
         // queue reaches 'limit + 1' elements.
         Queue<Query3SortResult> queue = new PriorityQueue<>(limit + 1);
 
-        try {
-            db.setAutoCommit(false);
+        ResultSet r = null;
 
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(queryString)) {
             long endDate = startDate + (long)duration * 24 * 60 * 60 * 1000;
 
-            long countryXId = LdbcUtils.getCountryId(db, countryX);
-            long countryYId = LdbcUtils.getCountryId(db, countryY);
+            long countryXId = LdbcUtils.getCountryId(c, countryX);
+            long countryYId = LdbcUtils.getCountryId(c, countryY);
 
             // Accumulate counts per country.
             Map<Long, Query3Counts> counts = new HashMap<>();
 
-            PreparedStatement s = db.prepareStatement(queryString);
             s.setLong(1, countryXId);
             s.setLong(2, countryYId);
             s.setLong(3, startDate);
@@ -160,37 +161,35 @@ public class Query3 implements ExecutableQuery {
             s.setLong(11, personId);
             s.setLong(12, countryXId);
             s.setLong(13, countryYId);
-            ResultSet r = s.executeQuery();
+            r = s.executeQuery();
             while (r.next()) {
                 long friendId = r.getLong("Person.id");
                 long countryId = r.getLong("U1.placeId");
 
-                Query3Counts c = counts.get(friendId);
-                if (c == null)
+                Query3Counts friendCounts = counts.get(friendId);
+                if (friendCounts == null)
                     counts.put(friendId,
                                new Query3Counts(countryId == countryXId ? 1 : 0,
                                                 countryId == countryYId ? 1 : 0));
                 else if (countryId == countryXId)
-                    c.incXCount();
+                    friendCounts.incXCount();
                 else
-                    c.incYCount();
+                    friendCounts.incYCount();
             }
-            r.close();
-            s.close();
 
             for (Map.Entry<Long, Query3Counts> entry : counts.entrySet()) {
                 long friendId = entry.getKey();
-                Query3Counts c = entry.getValue();
-                int countx = c.getXCount();
-                int county = c.getYCount();
+                Query3Counts friendCounts = entry.getValue();
+                int countx = friendCounts.getXCount();
+                int county = friendCounts.getYCount();
 
                 // Only include friends who have been to both
                 // countries.
                 if (countx != 0 && county != 0) {
                     Query3SortResult e = new Query3SortResult(
                         friendId,
-                        LdbcUtils.getFirstName(db, friendId),
-                        LdbcUtils.getLastName(db, friendId),
+                        LdbcUtils.getFirstName(c, friendId),
+                        LdbcUtils.getLastName(c, friendId),
                         countx,
                         county);
 
@@ -204,9 +203,9 @@ public class Query3 implements ExecutableQuery {
                 }
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
+            if (r != null) r.close();
         }
 
         List<LdbcQuery3Result> results = new ArrayList<>();
@@ -236,11 +235,12 @@ public class Query3 implements ExecutableQuery {
      * @return the top 'limit' friends of the given person with the given first name
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, String countryX, String countryY, long startDate, int duration, int limit) throws SQLException {
+    private static ResultSet explain(HikariDataSource db, long personId, String countryX, String countryY, long startDate, int duration, int limit) throws SQLException {
+        Connection c = db.getConnection();
         long endDate = startDate + (long)duration * 24 * 60 * 60 * 1000;
-        long countryXId = LdbcUtils.getCountryId(db, countryX);
-        long countryYId = LdbcUtils.getCountryId(db, countryY);
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+        long countryXId = LdbcUtils.getCountryId(c, countryX);
+        long countryYId = LdbcUtils.getCountryId(c, countryY);
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, countryXId);
         s.setLong(2, countryYId);
         s.setLong(3, startDate);
@@ -265,7 +265,7 @@ public class Query3 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -291,7 +291,7 @@ public class Query3 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
             long startDate = queryParameters.getLong();

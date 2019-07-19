@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcUpdate8AddFriendship;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,20 +19,18 @@ public class UpdateQuery8 {
 
     /**
      * Add a friendship.
-     * @param db          A database handle
+     * @param ds          A data source
      * @param parameters  The parameters of this transaction
      * @throws SQLException if a database access error occurs
      */
-    public static void query(Connection db, LdbcUpdate8AddFriendship parameters) throws SQLException {
-        try {
-            db.setAutoCommit(false);
-
-            String query =
-                "   INSERT INTO PersonKnowsPerson " +
-                "        VALUES (?, " + // person1Id
-                "                ?, " + // person2Id
-                "                ?)";   // creationDate
-            PreparedStatement s = db.prepareStatement(query);
+    public static void query(HikariDataSource ds, LdbcUpdate8AddFriendship parameters) throws SQLException {
+        String query =
+            "   INSERT INTO PersonKnowsPerson " +
+            "        VALUES (?, " + // person1Id
+            "                ?, " + // person2Id
+            "                ?)";   // creationDate
+        try (Connection c = ds.getConnection();
+             PreparedStatement s = c.prepareStatement(query)) {
             s.setLong(1, parameters.person1Id());
             s.setLong(2, parameters.person2Id());
             s.setLong(3, parameters.creationDate().getTime());
@@ -39,10 +39,7 @@ public class UpdateQuery8 {
             s.setLong(2, parameters.person1Id());
             s.setLong(3, parameters.creationDate().getTime());
             s.executeUpdate();
-            s.close();
-            db.commit();
-        } finally {
-            db.setAutoCommit(true);
+            c.commit();
         }
     }
 

@@ -1,3 +1,9 @@
+# Host for the database, a name or an IP address; probably no need to change this field
+host:localhost
+
+# Port to access the database; probably no need to change this field
+port:3306
+
 # Name of the database; no need to change this field
 database:ldbc
 
@@ -7,11 +13,11 @@ user:ldbc
 # Password for the user of the database; please fill in
 password:
 
-# Location of the substitution parameter files containing files such as query_1_param.txt and others; please update as necessary
+# Location of the substitution parameter files containing files such as interactive_1_param.txt and others; please update as necessary
 parameterFilesDirectory:/home/user/ldbc_snb_datagen/substitution_parameters
 
-# Location of the dataset in CSV format, one entitity/relation per file (i.e., merged)
-datasetDirectory:/home/user/ldbc_snb_datagen/social_network_merged
+# Location of the dataset in CSV format, one entity/relation per file
+datasetDirectory:/home/user/ldbc_snb_datagen/social_network
 
 # Uncomment next line for verbose output (i.e., results of the queries)
 #beVerbose:true

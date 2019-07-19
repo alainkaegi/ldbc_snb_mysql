@@ -1,10 +1,12 @@
 /*
- * Copyright © 2018, 2019 Alain Kägi
+ * Copyright © 2018-2019 Alain Kägi
  */
 
 package ldbc.queries;
 
 import com.ldbc.driver.workloads.ldbc.snb.interactive.LdbcQuery7Result;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,7 +36,7 @@ public class Query7 implements ExecutableQuery {
 
     /* Static query parameters. */
     private static final String queryName = "Query7";
-    private static final String queryParameterFilename = "query_7_param.txt";
+    private static final String queryParameterFilename = "interactive_7_param.txt";
     private static final String queryParameterFileLinePattern = "(\\d+)";
     private static final int queryLimit = 20;
     // Recent likes of messages created by the start person
@@ -95,14 +97,13 @@ public class Query7 implements ExecutableQuery {
 
     /**
      * Recent likes (seventh complex read query).
-     * @param db        A database handle
+     * @param ds        A data source
      * @param personId  The person's unique identifier
      * @param limit     An upper bound on the number of results returned
      * @return the top 'limit' recent likes on the given person's messages
      * @throws SQLException if a database access error occurs
      */
-    public static List<LdbcQuery7Result> query(Connection db, long personId, int limit) throws SQLException {
-
+    public static List<LdbcQuery7Result> query(HikariDataSource ds, long personId, int limit) throws SQLException {
         List<LdbcQuery7Result> results = new ArrayList<>();
 
         String knowsQuery =
@@ -117,19 +118,17 @@ public class Query7 implements ExecutableQuery {
         ResultSet r1 = null;
         ResultSet r = null;
 
-        try {
-            db.setAutoCommit(false);
-
+        try (Connection c = ds.getConnection()) {
             // The friends of the start person.
             Set<Long> friends = new HashSet<>();
-            s1 = db.prepareStatement(knowsQuery);
+            s1 = c.prepareStatement(knowsQuery);
             s1.setLong(1, personId);
             r1 = s1.executeQuery();
             while (r1.next()) {
                 friends.add(r1.getLong("PersonKnowsPerson.person2id"));
             }
 
-            s = db.prepareStatement(queryString);
+            s = c.prepareStatement(queryString);
             s.setLong(1, personId);
             s.setLong(2, personId);
             r = s.executeQuery();
@@ -158,9 +157,8 @@ public class Query7 implements ExecutableQuery {
                 results.add(result);
             }
 
-            db.commit();
+            c.commit();
         } finally {
-            db.setAutoCommit(true);
             if (r1 != null) { r1.close(); }
             if (s1 != null) { s1.close(); }
             if (r != null) { r.close(); }
@@ -178,8 +176,9 @@ public class Query7 implements ExecutableQuery {
      * @return information about the query execution plan
      * @throws SQLException if a database access error occurs
      */
-    private static ResultSet explain(Connection db, long personId, int limit) throws SQLException {
-        PreparedStatement s = db.prepareStatement(Explanation.query + queryString);
+    private static ResultSet explain(HikariDataSource db, long personId, int limit) throws SQLException {
+        Connection c = db.getConnection();
+        PreparedStatement s = c.prepareStatement(Explanation.query + queryString);
         s.setLong(1, personId);
         s.setLong(2, personId);
         s.setLong(3, personId);
@@ -194,7 +193,7 @@ public class Query7 implements ExecutableQuery {
      * @param printHeapUsage   Print heap usage if true
      * @throws SQLException if a database access error occurs
      */
-    public void executeQuery(Connection db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
+    public void executeQuery(HikariDataSource db, QueryParameterFile queryParameters, boolean beVerbose, boolean printHeapUsage) throws SQLException {
         HeapUsage heapUsage = new HeapUsage();
 
         while (queryParameters.nextLine()) {
@@ -216,7 +215,7 @@ public class Query7 implements ExecutableQuery {
      * @param queryParameters  Stream of query input parameters
      * @throws SQLException if a database access error occurs
      */
-    public void explainQuery(Connection db, QueryParameterFile queryParameters) throws SQLException {
+    public void explainQuery(HikariDataSource db, QueryParameterFile queryParameters) throws SQLException {
         if (queryParameters.nextLine()) {
             long personId = queryParameters.getLong();
 
